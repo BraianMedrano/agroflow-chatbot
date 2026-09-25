@@ -1,0 +1,267 @@
+{
+  "name": "Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "d01e7ba4-e412-47e5-a841-dafc71257beb",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "37753487-a3db-4da4-b66f-c952aa674653",
+      "name": "Webhook",
+      "webhookId": "d01e7ba4-e412-47e5-a841-dafc71257beb"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        0
+      ],
+      "id": "3605c4be-3ae7-4189-a66f-ddb063c7c91e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b67c9ec7-f7d3-4259-a327-c64d909e2eb6",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "26163016-ca5e-4e1f-bd4a-d59e734467f2",
+              "leftValue": "={{ $json.body.data.messageType }}",
+              "rightValue": "conversation",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "20355ee0-d752-4682-b1a1-798b0d423a8f",
+              "leftValue": "={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "@g.us",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        256,
+        0
+      ],
+      "id": "914ef678-b2ff-4874-8969-7210d85f3e6d",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5a66e889-027e-4e5a-be36-38d0c49f8590",
+              "name": "chatId",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "52b95d0e-7eac-49db-9e16-b2ffe287315b",
+              "name": "phone",
+              "value": "={{ $json.body.data.key.remoteJid.split('@')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "f36ef671-476e-4d43-9f4e-a5255da3215d",
+              "name": "name",
+              "value": "={{ $json.body.data.pushName || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b694c93d-a5df-4a84-a897-e5eca1f3a8ca",
+              "name": "messageId",
+              "value": "={{ $json.body.data.key.id }}",
+              "type": "string"
+            },
+            {
+              "id": "59401569-b4e5-4b1d-b88c-87ed0111e3e4",
+              "name": "instance",
+              "value": "={{ $json.body.instance }}",
+              "type": "string"
+            },
+            {
+              "id": "c13033a7-f961-4005-b85c-f5e3e90dfcbc",
+              "name": "text",
+              "value": "={{ $json.body.data.message.conversation.trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "437c3bdb-8890-4f28-9326-6fa4650a5330",
+              "name": "textNormalized",
+              "value": "={{ $json.body.data.message.conversation.trim().toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "72ed8c43-13d9-4e0f-8454-f8468ccf049a",
+              "name": "receivedAt",
+              "value": "={{ new Date($json.body.data.messageTimestamp * 1000).toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "af2df119-77e7-431f-a15a-9d2e3583add5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": " http://localhost:5678/webhook/stub-chat-inbound",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"whatsapp\",\n  \"ingenioId\": \"demo\",\n  \"instance\": \"{{ $json.instance }}\",\n  \"chatId\": \"{{ $json.chatId }}\",\n  \"phone\": \"{{ $json.phone }}\",\n  \"name\": \"{{ $json.name }}\",\n  \"messageId\": \"{{ $json.messageId }}\",\n  \"text\": \"{{ $json.text }}\",\n  \"textNormalized\": \"{{ $json.textNormalized }}\",\n  \"receivedAt\": \"{{ $json.receivedAt }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        640,
+        0
+      ],
+      "id": "3ac2f0d5-bfd4-43fe-98e9-e429c9b36a44",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://agroflow-evolution:8080/message/sendText/agroflow-demo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Edit Fields').item.json.chatId }}\",\n  \"text\": \"{{ $json.reply.text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        864,
+        0
+      ],
+      "id": "14376ec1-6c6d-481f-85f3-d382a73b672d",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vY9YyKzrHJmqnsai",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b37d40ce-9874-48f2-ad5f-1707fcc23958",
+  "meta": {
+    "instanceId": "bbd79d5dcecdd772f4be4c1fa61285d1f3dabb4d351bf05edf26fe5dc91cb8d5"
+  },
+  "nodeGroups": [],
+  "id": "En6GlMMfXAwYeUcR",
+  "tags": []
+}

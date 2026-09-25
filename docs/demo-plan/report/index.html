@@ -1,0 +1,1286 @@
+<title>Plan de API AgroFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --ground: #f2f4f0;
+  --surface: #ffffff;
+  --surface-2: #e8ece5;
+  --line: #d3d9cf;
+  --ink: #141a16;
+  --ink-soft: #5c6a61;
+  --accent: #3d7a1a;
+  --accent-ink: #ffffff;
+  --accent-wash: #e2f0d6;
+  --warn: #9a5a1e;
+  --warn-wash: #f5e6d6;
+  --crit: #a83a2c;
+  --crit-wash: #f6dfdb;
+  --muted-wash: #e4e8e2;
+  --shot-border: #c9d0c4;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* Product screens (map, phone) always render in the dashboard's dark look */
+  --scr-bg: #070b09;
+  --scr-panel: #0d1411;
+  --scr-line: #1d2a23;
+  --scr-ink: #e9f0ec;
+  --scr-soft: #7f8e85;
+  --scr-green: #9ee870;
+  --scr-amber: #d89b63;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #080a0b;
+    --surface: #0d1213;
+    --surface-2: #131a1b;
+    --line: #24292a;
+    --ink: #e9f0ec;
+    --ink-soft: #8a978f;
+    --accent: #9ee870;
+    --accent-ink: #0b1208;
+    --accent-wash: #16240f;
+    --warn: #d89b63;
+    --warn-wash: #2a1d10;
+    --crit: #f08a7a;
+    --crit-wash: #2d1512;
+    --muted-wash: #1a2021;
+    --shot-border: #2c3334;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #080a0b;
+  --surface: #0d1213;
+  --surface-2: #131a1b;
+  --line: #24292a;
+  --ink: #e9f0ec;
+  --ink-soft: #8a978f;
+  --accent: #9ee870;
+  --accent-ink: #0b1208;
+  --accent-wash: #16240f;
+  --warn: #d89b63;
+  --warn-wash: #2a1d10;
+  --crit: #f08a7a;
+  --crit-wash: #2d1512;
+  --muted-wash: #1a2021;
+  --shot-border: #2c3334;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-inline: 20px;
+  padding-block: 0 80px;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 650; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 4.5vw, 2.9rem); line-height: 1.08; }
+h2 { font-size: 1.55rem; line-height: 1.2; }
+h3 { font-size: 1.1rem; font-weight: 500; }
+p { margin: 0; max-width: 70ch; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.soft { color: var(--ink-soft); }
+
+/* masthead */
+.masthead { display: grid; gap: 18px; padding-block: 48px 30px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.eyebrow b { color: var(--accent); font-weight: 500; }
+.lede { font-size: 1.12rem; color: var(--ink-soft); max-width: 64ch; }
+.lede strong { color: var(--ink); font-weight: 600; }
+.toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.toc a { background: var(--surface); padding: 14px 18px; color: var(--ink); text-decoration: none; display: grid; gap: 2px; }
+.toc a:hover { background: var(--surface-2); }
+.toc .n { font-family: var(--mono); font-size: 11.5px; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+.toc b { font-family: var(--serif); font-weight: 500; font-size: 1.05rem; }
+.toc span:last-child { font-size: 13px; color: var(--ink-soft); }
+
+/* parts */
+.part { padding-block: 64px 0; display: grid; gap: 8px; }
+.part-head { display: grid; gap: 8px; padding-bottom: 18px; border-bottom: 2px solid var(--accent); }
+.part-head .n { font-family: var(--mono); font-size: 12.5px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+.part-head h2 { font-size: clamp(1.8rem, 3.6vw, 2.3rem); }
+.part-head p { color: var(--ink-soft); font-size: 1.02rem; }
+section { display: grid; gap: 18px; padding-block: 38px 4px; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head h3 { font-size: 1.35rem; font-weight: 650; }
+.sec-head p { color: var(--ink-soft); }
+
+/* flow chain */
+.chain { display: flex; align-items: stretch; }
+.node { flex: 1 1 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); padding: 16px 14px; display: grid; gap: 8px; align-content: start; }
+.node.truth { border-color: var(--accent); background: var(--accent-wash); }
+.node svg { width: 30px; height: 30px; color: var(--accent); }
+.node .t { font-weight: 600; font-size: 14.5px; line-height: 1.3; }
+.node .d { font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
+.node .ex { font-family: var(--mono); font-size: 11.5px; color: var(--ink); background: var(--surface-2); padding: 6px 8px; line-height: 1.45; word-break: break-word; }
+.node.truth .ex { background: var(--surface); }
+.link { flex: 0 0 34px; position: relative; align-self: center; height: 2px; background: var(--line); }
+.link::after { content: ""; position: absolute; top: -3px; left: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: travel 2.2s linear infinite; }
+.link.rev::after { animation-direction: reverse; }
+@keyframes travel { from { left: 0; } to { left: calc(100% - 8px); } }
+@keyframes travelv { from { top: 0; } to { top: calc(100% - 8px); } }
+.chain-note { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 28px; font-size: 14px; color: var(--ink-soft); }
+.chain-note b { color: var(--ink); font-weight: 600; }
+.rule { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: 15px; }
+.rule b { color: var(--accent); font-weight: 600; }
+
+/* steps + phone */
+.walk { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.9fr); gap: 32px; align-items: start; }
+.phase { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); padding: 14px 0 8px; }
+.phase:first-child { padding-top: 0; }
+ol.steps { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--line); counter-reset: s var(--start, 0); }
+ol.steps li { counter-increment: s; position: relative; padding: 0 0 16px 24px; display: grid; gap: 2px; }
+ol.steps li::before { content: counter(s); position: absolute; left: -12px; top: 1px; width: 22px; height: 22px; border-radius: 50%; background: var(--ground); border: 2px solid var(--line); color: var(--ink-soft); font-family: var(--mono); font-size: 11px; display: grid; place-items: center; }
+ol.steps li.key::before { border-color: var(--accent); color: var(--accent); }
+ol.steps li b { font-weight: 600; font-size: 14.5px; }
+ol.steps li span { color: var(--ink-soft); font-size: 13.5px; max-width: 62ch; }
+.who { font-family: var(--mono); font-size: 10.5px; padding: 1px 6px; border-radius: 2px; background: var(--muted-wash); color: var(--ink-soft); margin-left: 6px; vertical-align: 1px; white-space: nowrap; }
+
+.phone { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); background: var(--scr-bg); border: 1px solid var(--scr-line); border-radius: 22px; padding: 12px; color: var(--scr-ink); max-width: 360px; justify-self: center; width: 100%; box-shadow: 0 18px 40px -24px rgba(0,0,0,.55); }
+.phone-top { display: flex; align-items: center; gap: 10px; padding: 6px 8px 12px; border-bottom: 1px solid var(--scr-line); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: #16240f; display: grid; place-items: center; color: var(--scr-green); font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.phone-top b { font-size: 14px; font-weight: 600; display: block; line-height: 1.2; }
+.phone-top small { font-size: 11.5px; color: var(--scr-soft); }
+.chat { display: grid; gap: 8px; padding: 12px 4px 6px; }
+.bubble { max-width: 86%; padding: 8px 10px 6px; border-radius: 10px; font-size: 13px; line-height: 1.45; display: grid; gap: 2px; }
+.bubble .tm { font-family: var(--mono); font-size: 10px; color: var(--scr-soft); justify-self: end; }
+.bubble.in { background: #141c18; justify-self: start; border-top-left-radius: 2px; }
+.bubble.out { background: #1a2e12; justify-self: end; border-top-right-radius: 2px; }
+.bubble.out .who-b { color: var(--scr-green); font-family: var(--mono); font-size: 10.5px; }
+.bubble .pin { display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: center; }
+.bubble .pin i { width: 34px; height: 34px; border-radius: 6px; background: repeating-linear-gradient(135deg, #10231a 0 6px, #0c1a13 6px 12px); display: grid; place-items: center; }
+.bubble .pin i svg { width: 16px; height: 16px; color: var(--scr-green); }
+.sysnote { justify-self: center; font-family: var(--mono); font-size: 10.5px; color: var(--scr-soft); border: 1px dashed var(--scr-line); padding: 3px 8px; border-radius: 10px; text-align: center; }
+
+/* incident */
+.incident-wrap { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 28px; align-items: start; }
+.phone.inline { position: static; max-width: 400px; }
+.effects { display: grid; gap: 12px; }
+.effect { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; }
+.effect svg { width: 24px; height: 24px; color: var(--warn); margin-top: 2px; }
+.effect b { font-weight: 600; font-size: 14.5px; display: block; }
+.effect span { font-size: 13.5px; color: var(--ink-soft); }
+.bubble .alert { color: var(--scr-amber); font-family: var(--mono); font-size: 10.5px; }
+
+/* live map */
+.screen { background: var(--scr-bg); border: 1px solid var(--scr-line); color: var(--scr-ink); display: grid; grid-template-columns: minmax(0, 1fr) 300px; }
+.map-area { position: relative; min-width: 0; border-right: 1px solid var(--scr-line); }
+.hud { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 14px; border-bottom: 1px solid var(--scr-line); }
+.clock { display: flex; align-items: baseline; gap: 10px; }
+.clock .time { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--scr-ink); font-variant-numeric: tabular-nums; }
+.clock .meta { font-family: var(--mono); font-size: 11px; color: var(--scr-soft); }
+.hud-ctrl { display: flex; gap: 6px; align-items: center; }
+.hud button { font-family: var(--mono); font-size: 11.5px; color: var(--scr-green); background: transparent; border: 1px solid #2c4a22; padding: 4px 10px; cursor: pointer; }
+.hud button:hover { background: #122010; }
+.hud button:focus-visible { outline: 2px solid var(--scr-green); outline-offset: 2px; }
+.tagsim { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--scr-amber); border: 1px solid #4a3320; padding: 2px 7px; }
+.map-scroll { overflow-x: auto; }
+#map { display: block; width: 100%; min-width: 560px; height: auto; }
+#map text { font-family: var(--mono); }
+.banner { position: absolute; left: 14px; bottom: 52px; right: 14px; background: #2a1d10; border: 1px solid var(--scr-amber); color: var(--scr-amber); font-family: var(--mono); font-size: 12px; padding: 7px 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 9px 14px; border-top: 1px solid var(--scr-line); font-family: var(--mono); font-size: 11px; color: var(--scr-soft); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.side { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-width: 0; }
+.side h4 { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--scr-soft); padding: 11px 14px 8px; border-bottom: 1px solid var(--scr-line); display: flex; justify-content: space-between; }
+.trucks { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--scr-line); min-height: 236px; }
+.trucks li { display: grid; grid-template-columns: 78px 1fr auto; gap: 2px 8px; align-items: center; padding: 6px 14px; border-bottom: 1px solid #111a15; font-size: 12px; }
+.trucks li:last-child { border-bottom: 0; }
+.trucks .pl { font-family: var(--mono); font-size: 11.5px; }
+.trucks li.feat .pl { color: var(--scr-green); }
+.trucks .fc { color: var(--scr-soft); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trucks .eta { font-family: var(--mono); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--scr-ink); text-align: right; }
+.st { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 2px; grid-column: 2; justify-self: start; }
+.st.en_route { background: #16240f; color: var(--scr-green); }
+.st.pending { background: #151b18; color: var(--scr-soft); }
+.st.in_yard { background: #1b2420; color: #cfe0d5; }
+.st.unloading { background: #16240f; color: #bdf59a; }
+.st.stopped, .st.incident { background: #2a1d10; color: var(--scr-amber); }
+.feed { list-style: none; margin: 0; padding: 8px 14px 12px; display: grid; gap: 7px; align-content: start; min-height: 200px; }
+.feed li { font-size: 12px; line-height: 1.4; display: grid; grid-template-columns: 40px 1fr; gap: 6px; }
+.feed .tm { font-family: var(--mono); font-size: 10.5px; color: var(--scr-soft); padding-top: 1px; font-variant-numeric: tabular-nums; }
+.feed .in b { color: var(--scr-ink); font-weight: 600; }
+.feed .out { color: #c9f2ad; }
+.feed .sys { color: var(--scr-soft); font-family: var(--mono); font-size: 11px; }
+.feed .warn { color: var(--scr-amber); font-family: var(--mono); font-size: 11px; }
+@keyframes pulse { from { r: 8; opacity: .9; } to { r: 30; opacity: 0; } }
+.pulse { animation: pulse 1.4s ease-out infinite; }
+
+/* cards */
+.parts3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.pcard { background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-rows: auto 1fr; }
+.pcard.truth { border-color: var(--accent); }
+.pcard header { padding: 18px 18px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 6px; }
+.pcard header .k { font-family: var(--mono); font-size: 11.5px; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+.pcard header h3 { font-size: 1.3rem; font-weight: 650; }
+.pcard header p { font-size: 14px; color: var(--ink-soft); }
+.pcard .body { padding: 14px 18px 18px; display: grid; gap: 14px; align-content: start; }
+.pcard h5 { margin: 0 0 6px; font-family: var(--mono); font-weight: 500; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.pcard ul { margin: 0; padding-left: 17px; display: grid; gap: 5px; font-size: 14px; }
+.pcard ul.no li::marker { content: "× "; color: var(--ink-soft); }
+
+.mem { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.mem > div { background: var(--surface); padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.mem .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.mem b { font-weight: 600; }
+.mem p { font-size: 14px; color: var(--ink-soft); }
+.mem dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; }
+.mem dt { color: var(--ink-soft); }
+.mem dd { margin: 0; }
+.mem dd.lost { color: var(--warn); }
+.mem dd.kept { color: var(--accent); }
+
+.concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.concept { border: 1px solid var(--line); background: var(--surface); padding: 18px; display: grid; gap: 10px; align-content: start; }
+.concept h3 { font-weight: 650; }
+.concept p { font-size: 14.5px; }
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); font-size: 13px; }
+.vs div { background: var(--surface); padding: 8px 10px; }
+.vs .h { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); background: var(--surface-2); }
+
+/* tech */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-soft); padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); white-space: nowrap; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td .where { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+.chip { display: inline-block; font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 2px; white-space: nowrap; letter-spacing: 0.02em; }
+.chip.crit { background: var(--crit-wash); color: var(--crit); }
+.chip.warn { background: var(--warn-wash); color: var(--warn); }
+.chip.low, .chip.mock { background: var(--muted-wash); color: var(--ink-soft); }
+.chip.real { background: var(--accent-wash); color: var(--accent); }
+
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+figure { margin: 0; display: grid; gap: 6px; align-content: start; }
+figure img { width: 100%; max-width: 100%; display: block; border: 1px solid var(--shot-border); max-height: 260px; object-fit: cover; object-position: top; }
+figcaption { font-size: 12.5px; color: var(--ink-soft); }
+figcaption b { color: var(--ink); font-weight: 600; }
+
+.endpoints { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.ep-group { border: 1px solid var(--line); background: var(--surface); }
+.ep-group h4 { margin: 0; font-family: var(--sans); font-size: 15px; font-weight: 600; padding: 13px 16px 10px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ep-group h4 span { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); font-weight: 400; }
+.ep { display: grid; grid-template-columns: 56px 1fr; gap: 2px 10px; padding: 9px 16px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.ep:last-child { border-bottom: 0; }
+.verb { font-family: var(--mono); font-size: 11.5px; font-weight: 500; color: var(--accent); padding-top: 2px; }
+.path { font-family: var(--mono); font-size: 12.8px; word-break: break-word; }
+.ep .why { grid-column: 2; color: var(--ink-soft); font-size: 13px; }
+.ep .chip { margin-left: 6px; vertical-align: 1px; font-size: 10px; padding: 1px 6px; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px 36px; }
+.note { display: grid; gap: 8px; align-content: start; }
+.note h4 { margin: 0; font-size: 15px; font-weight: 600; }
+.note p, .note li { font-size: 14px; }
+ul.clean { margin: 0; padding-left: 18px; display: grid; gap: 5px; max-width: 70ch; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--line); padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 12.3px; line-height: 1.55; color: var(--ink); }
+pre .c { color: var(--ink-soft); }
+pre .k { color: var(--accent); }
+
+.tracks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.track { background: var(--surface); padding: 16px 18px; display: grid; gap: 8px; align-content: start; }
+.track .k { font-family: var(--mono); font-size: 11.5px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+.track ul { margin: 0; padding-left: 16px; display: grid; gap: 5px; font-size: 13.5px; }
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.ph { border-top: 3px solid var(--line); padding-top: 10px; display: grid; gap: 4px; }
+.ph.gate { border-top-color: var(--accent); }
+.ph .d { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); }
+.ph b { font-weight: 600; font-size: 14.5px; }
+.ph span { font-size: 13.5px; color: var(--ink-soft); }
+
+.decision { border: 1px solid var(--line); background: var(--surface); padding: 15px 18px; display: grid; gap: 6px; }
+.decision .q { font-weight: 600; }
+.decision p { font-size: 14px; color: var(--ink-soft); }
+.decision p b { color: var(--accent); font-weight: 600; }
+.decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); display: grid; gap: 4px; }
+
+@media (max-width: 900px) {
+  .chain { flex-direction: column; }
+  .link { flex: 0 0 30px; width: 2px; height: auto; }
+  .link::after { left: -3px; animation-name: travelv; }
+  .walk, .incident-wrap { grid-template-columns: 1fr; }
+  .phone { position: static; }
+  .screen { grid-template-columns: 1fr; }
+  .map-area { border-right: 0; border-bottom: 1px solid var(--scr-line); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .link::after, .pulse { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="eyebrow"><span><b>AgroFlow</b> · demo para ingenios</span><span>Flujo, partes y plan técnico</span><span>Fecha de demo: tentativa</span></div>
+    <h1>Plan de API AgroFlow</h1>
+    <p class="lede">Cómo funcionaría la demo de punta a punta: <strong>un transportista pide turno por WhatsApp, el ingenio lo ve aparecer en su panel y sigue al camión en un mapa</strong>. Primero la idea en simple, después las piezas y, al final, el detalle técnico para construirla.</p>
+    <nav class="toc" aria-label="Partes del informe">
+      <a href="#parte-1"><span class="n">Parte 1</span><b>Cómo funciona</b><span>El flujo, la prueba paso a paso y el mapa en vivo</span></a>
+      <a href="#parte-2"><span class="n">Parte 2</span><b>Las tres piezas</b><span>Chatbot, API y dashboard: qué hace cada uno</span></a>
+      <a href="#parte-3"><span class="n">Parte 3</span><b>Detalle técnico</b><span>Qué se construye, qué se simula y en qué orden</span></a>
+    </nav>
+  </header>
+
+  <!-- ================= PARTE 1 ================= -->
+  <div class="part" id="parte-1">
+    <div class="part-head">
+      <span class="n">Parte 1</span>
+      <h2>Cómo funciona</h2>
+      <p>La explicación para cualquier persona del equipo, sin necesidad de saber programar.</p>
+    </div>
+
+    <section>
+      <div class="sec-head">
+        <h3>Una cadena de cinco eslabones</h3>
+        <p>Cada eslabón hace una sola cosa. El mensaje del transportista viaja de izquierda a derecha y la respuesta vuelve por el mismo camino.</p>
+      </div>
+      <div class="chain" role="list">
+        <div class="node" role="listitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"></rect><path d="M10.5 18.5h3"></path></svg>
+          <span class="t">Celular del transportista</span>
+          <span class="d">Escribe como le escribiría a una persona.</span>
+          <span class="ex">"Patente AA 123 BC, salgo de Los Álamos"</span>
+        </div>
+        <div class="link" aria-hidden="true"></div>
+        <div class="node" role="listitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h4l2-5 4 10 2-5h4"></path></svg>
+          <span class="t">Evolution API</span>
+          <span class="d">Recibe el WhatsApp y lo reenvía. Es el "cartero".</span>
+          <span class="ex">mensaje → webhook</span>
+        </div>
+        <div class="link" aria-hidden="true"></div>
+        <div class="node" role="listitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"></path></svg>
+          <span class="t">n8n + agente IA</span>
+          <span class="d">Entiende el texto, decide qué pedir y redacta la respuesta.</span>
+          <span class="ex">patente, finca y hora de corte</span>
+        </div>
+        <div class="link" aria-hidden="true"></div>
+        <div class="node truth" role="listitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7" ry="2.5"></ellipse><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"></path></svg>
+          <span class="t">API AgroFlow</span>
+          <span class="d">Calcula el turno y lo guarda. Es la única fuente de verdad.</span>
+          <span class="ex">turno 11:00–11:30 · salida 10:12</span>
+        </div>
+        <div class="link rev" aria-hidden="true"></div>
+        <div class="node" role="listitem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="19" height="13" rx="1.5"></rect><path d="M8 21h8M12 17v4M6 13l3-3 3 2 5-5"></path></svg>
+          <span class="t">Dashboard del ingenio</span>
+          <span class="d">Lee la API cada pocos segundos: cola, mapa y chats.</span>
+          <span class="ex">fila nueva + marcador en el mapa</span>
+        </div>
+      </div>
+      <div class="chain-note">
+        <p><b>El agente nunca inventa el turno.</b> Le pide los números a la API y solo los pone en palabras. Todo lo que ve el transportista salió de la API.</p>
+        <p><b>Dos consumidores, una sola verdad.</b> El chofer (por WhatsApp) y el ingenio (en el panel) miran exactamente los mismos turnos.</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>La prueba, paso a paso</h3>
+        <p>Así se vería la demo frente al público. Hay dos roles: <b>quien presenta</b>, que escribe desde su celular, y <b>quien dirige</b>, una persona del equipo con otra laptop que controla la simulación.</p>
+      </div>
+      <div class="walk">
+        <div>
+          <div class="phase">Antes de empezar</div>
+          <ol class="steps">
+            <li><b>Se resetea la demo <span class="who">dirige</span></b><span>Todo vuelve al mismo punto de partida: reloj de demo en 09:30 y unos 20 turnos cargados.</span></li>
+            <li><b>El panel ya muestra movimiento</b><span>Cola del día con camiones en distintos estados y 5 o 6 camiones avanzando en el mapa.</span></li>
+          </ol>
+          <div class="phase">En vivo</div>
+          <ol class="steps" style="--start: 2">
+            <li><b>Quien presenta escribe por WhatsApp <span class="who">presenta</span></b><span>"Hola, soy Juan. Patente AA 123 BC, salgo de Finca Los Álamos, corté a las 7".</span></li>
+            <li><b>Evolution lo recibe y lo pasa a n8n</b><span>Llega en menos de un segundo.</span></li>
+            <li class="key"><b>El agente entiende y le pide el turno a la API</b><span>Saca patente, finca y hora de corte del texto libre, sin formularios.</span></li>
+            <li class="key"><b>La API calcula y guarda el turno</b><span>Ventana, hora de salida recomendada y prioridad. Queda registrado.</span></li>
+            <li><b>Llega la respuesta al celular</b><span>El agente redacta con los números que devolvió la API.</span></li>
+            <li class="key"><b>Aparece en el panel y en el mapa</b><span>En menos de 5 segundos: fila nueva en la cola con el chip "WhatsApp bot" y un marcador sobre la finca.</span></li>
+            <li><b>Quien presenta comparte su ubicación</b><span>La API ubica al camión sobre la ruta y recalcula la hora de llegada. El marcador salta a esa posición.</span></li>
+            <li class="key"><b>Otro camión reporta un problema <span class="who">dirige</span></b><span>"Se me pinchó una goma, estoy a unos 11 km de El Bañado". El bot confirma y pide la ubicación. El marcador se detiene en ámbar y el turno se libera. El operario lo marca como resuelto y el camión sigue viaje.</span></li>
+            <li><b>El camión avanza solo en el mapa</b><span>El reloj de demo corre acelerado. El camión llega al canchón y el operario lo pasa a "descargando".</span></li>
+            <li class="key"><b>El operario detiene la molienda <span class="who">dirige</span></b><span>Un transportista pregunta "¿salgo?" y el bot le contesta que espere en la finca.</span></li>
+          </ol>
+          <div class="phase">Al terminar</div>
+          <ol class="steps" style="--start: 12">
+            <li><b>Se resetea otra vez <span class="who">dirige</span></b><span>Queda idéntico para la próxima pasada o el próximo ensayo.</span></li>
+          </ol>
+        </div>
+
+        <div class="phone" aria-label="Ejemplo de conversación de WhatsApp con el bot">
+          <div class="phone-top">
+            <span class="avatar">AF</span>
+            <div><b>AgroFlow Turnos</b><small>bot · demo</small></div>
+          </div>
+          <div class="chat">
+            <span class="sysnote">conversación de ejemplo</span>
+            <div class="bubble in">Hola, soy Juan. Patente AA 123 BC, salgo de Finca Los Álamos, corté a las 7<span class="tm">10:03</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span>Listo Juan. Tu turno es <b>11:00–11:30</b>. Salí a las <b>10:12</b> (50 min de viaje). Prioridad normal: 3 h desde el corte.<span class="tm">10:04</span></div>
+            <div class="bubble in"><span class="pin"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg></i><span>Ubicación actual</span></span><span class="tm">10:40</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span>Vas mejor de lo previsto: llegada estimada <b>10:55</b>. Ingresá por el portón 2.<span class="tm">10:41</span></div>
+            <div class="bubble in">¿Ya puedo descargar?<span class="tm">11:14</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span>La molienda está detenida en este momento. Esperá en el canchón, te aviso cuando se reanude.<span class="tm">11:15</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Cuando un camión tiene un problema</h3>
+        <p>El transportista lo cuenta con sus palabras. El bot entiende, <b>confirma antes de avisar</b> y el ingenio lo ve al instante, algo que hoy recién descubre cuando el camión no llega.</p>
+      </div>
+      <div class="incident-wrap">
+        <div class="phone inline" aria-label="Ejemplo de conversación reportando una pinchadura">
+          <div class="phone-top">
+            <span class="avatar">AF</span>
+            <div><b>AgroFlow Turnos</b><small>bot · demo</small></div>
+          </div>
+          <div class="chat">
+            <div class="bubble in">Se me pinchó una goma, estoy a unos 11 km de El Bañado<span class="tm">10:24</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span>Uh, lo siento. ¿Querés que avise al ingenio que estás detenido? Si podés, mandame tu ubicación.<span class="tm">10:25</span></div>
+            <div class="bubble in"><span class="pin"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.6-6-11a6 6 0 0 1 12 0c0 5.4-6 11-6 11z"></path><circle cx="12" cy="10" r="2.2"></circle></svg></i><span>Sí, avisá · Ubicación actual</span></span><span class="tm">10:26</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span><span class="alert">incidente registrado</span>Listo, el ingenio ya está al tanto. ¿Cuánto calculás que tardás en seguir?<span class="tm">10:26</span></div>
+            <div class="bubble in">Media hora más o menos<span class="tm">10:27</span></div>
+            <div class="bubble out"><span class="who-b">Bot AgroFlow</span>Anotado. Liberé tu turno de 11:00; cuando retomes te confirmo la nueva llegada.<span class="tm">10:27</span></div>
+          </div>
+        </div>
+        <div class="effects">
+          <div class="effect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"></path><path d="M9 4v14M15 6v14"></path></svg>
+            <div><b>En el mapa</b><span>El marcador se detiene donde está, cambia a ámbar y muestra "pinchadura". Al resolverse, sigue viaje desde ese punto.</span></div>
+          </div>
+          <div class="effect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"></path><circle cx="19" cy="18" r="2"></circle></svg>
+            <div><b>En la cola</b><span>El turno pasa a "Demorado" (un estado que ya existe en el mockup) y su ventana queda libre para otro camión.</span></div>
+          </div>
+          <div class="effect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 6"></path></svg>
+            <div><b>Para el operario</b><span>Aparece una alerta con un botón "Resuelto". Al tocarlo, se recalcula la llegada y el bot le confirma el nuevo horario al chofer.</span></div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cómo dice dónde está</th><th>Cómo se ubica</th></tr></thead>
+              <tbody>
+                <tr><td>Manda el pin</td><td>Se proyecta sobre su ruta. Es lo más preciso.</td></tr>
+                <tr><td>"A 11 km de la finca"</td><td>Los km se convierten en avance sobre la ruta de ese camión.</td></tr>
+                <tr><td>"En el cruce de la 38"</td><td>Se busca en una tabla de puntos de referencia. Si no lo encuentra, el bot pide el pin.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>El mapa en vivo, como lo vería el ingenio</h3>
+        <p>Simulación de cómo se vería el mapa en el dashboard. El reloj corre acelerado (1 segundo = 1 minuto) y repite la misma mañana en bucle. Seguí al camión <b>AA 123 BC</b>: aparece cuando escribe, sale, manda su ubicación, llega al canchón y queda detenido cuando para la molienda. A las 10:25, <b>AG 731 TU</b> reporta una pinchadura, queda detenido y retoma a las 10:55.</p>
+      </div>
+      <div class="screen">
+        <div class="map-area">
+          <div class="hud">
+            <div class="clock"><span class="time" id="clock">09:58</span><span class="meta">reloj de demo · x60</span></div>
+            <div class="hud-ctrl">
+              <span class="tagsim">posición estimada · simulado</span>
+              <button type="button" id="btn-play">Pausar</button>
+              <button type="button" id="btn-reset">Reiniciar</button>
+            </div>
+          </div>
+          <div class="map-scroll">
+            <svg id="map" viewBox="0 0 820 500" role="img" aria-label="Mapa simulado: fincas alrededor del ingenio, rutas y camiones en viaje con posición estimada.">
+              <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#0e1812" stroke-width="1"></path></pattern>
+              </defs>
+              <rect width="820" height="500" fill="#070b09"></rect>
+              <g id="fields"></g>
+              <rect width="820" height="500" fill="url(#grid)"></rect>
+              <path d="M0 330 C 160 300, 260 360, 420 330 S 700 300, 820 340" fill="none" stroke="#0b1f2a" stroke-width="7" opacity=".8"></path>
+              <path d="M40 40 C 200 90, 420 60, 560 150 S 760 330, 800 480" fill="none" stroke="#18261f" stroke-width="6"></path>
+              <text x="712" y="360" fill="#3b4a42" font-size="10" transform="rotate(62 712 360)">RUTA PROV. 38</text>
+              <g id="routes">
+                <path id="route-0" d="M120 390 C 220 385, 262 330, 340 318 S 520 282, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+                <path id="route-1" d="M150 100 C 250 120, 300 165, 380 188 S 530 238, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+                <path id="route-2" d="M330 460 C 380 415, 430 378, 470 340 S 560 272, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+                <path id="route-3" d="M760 80 C 722 132, 692 166, 662 198 S 616 240, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+                <path id="route-4" d="M770 430 C 732 384, 702 338, 672 308 S 622 266, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+                <path id="route-5" d="M50 240 C 180 232, 300 262, 420 255 S 540 248, 600 250" fill="none" stroke="#1a3325" stroke-width="2.5"></path>
+              </g>
+              <g id="route-hl"></g>
+              <g id="fincas"></g>
+              <rect x="618" y="268" width="92" height="52" fill="none" stroke="#2c4a22" stroke-dasharray="4 4"></rect>
+              <text x="664" y="336" text-anchor="middle" fill="#5d7266" font-size="10">CANCHÓN</text>
+              <g>
+                <rect x="586" y="236" width="28" height="28" fill="#10261a" stroke="#9ee870" stroke-width="1.5"></rect>
+                <rect x="604" y="222" width="6" height="14" fill="#10261a" stroke="#9ee870" stroke-width="1.5"></rect>
+                <text x="600" y="210" text-anchor="middle" fill="#9ee870" font-size="12" font-weight="500">Ingenio Demo</text>
+              </g>
+              <g id="pinmark"></g>
+              <g id="trucks"></g>
+            </svg>
+          </div>
+          <div class="banner" id="banner" hidden>Molienda detenida · el bot avisa a los camiones que esperen</div>
+          <div class="legend">
+            <span><i style="background:#9ee870"></i>flota propia</span>
+            <span><i style="background:#a9bcb0"></i>tercerizada</span>
+            <span><i style="border:1.5px solid #9ee870;width:8px;height:8px"></i>por salir</span>
+            <span><i style="background:#d89b63"></i>detenido / incidente</span>
+          </div>
+        </div>
+        <div class="side">
+          <h4><span>Camiones</span><span id="count">0</span></h4>
+          <ul class="trucks" id="truck-list"></ul>
+          <div>
+            <h4><span>Actividad</span><span>WhatsApp + API</span></h4>
+            <ul class="feed" id="feed"></ul>
+          </div>
+        </div>
+      </div>
+      <p class="soft" style="font-size:14px">Es una <b>posición estimada</b>: se calcula a partir de la hora de salida y el tiempo de viaje, no de un GPS. Cuando el transportista comparte su ubicación, la estimación se corrige. En pantalla tiene que decir siempre "estimada · simulado".</p>
+    </section>
+  </div>
+
+  <!-- ================= PARTE 2 ================= -->
+  <div class="part" id="parte-2">
+    <div class="part-head">
+      <span class="n">Parte 2</span>
+      <h2>Las tres piezas</h2>
+      <p>Qué hace cada una, qué tiene adentro y, tan importante como eso, qué no le toca hacer.</p>
+    </div>
+
+    <section>
+      <div class="parts3">
+        <article class="pcard">
+          <header>
+            <span class="k">Conversa</span>
+            <h3>Chatbot</h3>
+            <p>Evolution API recibe y envía los WhatsApp. n8n, con un agente de IA, entiende al transportista y le responde.</p>
+          </header>
+          <div class="body">
+            <div><h5>Tiene</h5>
+              <ul>
+                <li>Un número de WhatsApp de prueba conectado</li>
+                <li>Un agente que entiende texto libre y ubicaciones</li>
+                <li>Detección de problemas en ruta, confirmados con el chofer antes de avisar</li>
+                <li>Memoria de la charla, para no preguntar dos veces</li>
+                <li>Herramientas para consultar y pedir turnos a la API</li>
+              </ul>
+            </div>
+            <div><h5>No hace</h5>
+              <ul class="no">
+                <li>Calcular turnos, horarios ni prioridades</li>
+                <li>Guardar datos que el ingenio necesite ver</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+        <article class="pcard truth">
+          <header>
+            <span class="k">Guarda y calcula</span>
+            <h3>API</h3>
+            <p>El centro del sistema. Todo lo que importa se escribe acá en el momento en que pasa.</p>
+          </header>
+          <div class="body">
+            <div><h5>Tiene</h5>
+              <ul>
+                <li>Turnos con todo su recorrido: por salir, en viaje, en canchón, descargando</li>
+                <li>La ficha de cada transportista</li>
+                <li>El registro de los mensajes</li>
+                <li>Estado de la molienda y posiciones estimadas</li>
+                <li>Incidentes en ruta: dónde, qué pasó y cuándo se resolvió</li>
+                <li>El simulador: reloj de demo y datos iniciales</li>
+              </ul>
+            </div>
+            <div><h5>No hace</h5>
+              <ul class="no">
+                <li>Redactar mensajes: devuelve datos, no textos</li>
+                <li>Seguir el hilo de la conversación</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+        <article class="pcard">
+          <header>
+            <span class="k">Muestra y opera</span>
+            <h3>Dashboard del ingenio</h3>
+            <p>Lo que usa el personal de báscula. Ya existe como mockup y se conecta a la API por partes.</p>
+          </header>
+          <div class="body">
+            <div><h5>Tiene</h5>
+              <ul>
+                <li>Cola de turnos en vivo</li>
+                <li>Mapa con los camiones en viaje</li>
+                <li>Alertas de incidentes con botón "Resuelto"</li>
+                <li>Botones para avanzar, reasignar o cancelar turnos y para parar la molienda</li>
+                <li>Chats del bot y transportistas</li>
+                <li>Reportes y configuración (siguen simulados)</li>
+              </ul>
+            </div>
+            <div><h5>No hace</h5>
+              <ul class="no">
+                <li>Calcular nada por su cuenta</li>
+                <li>Guardar datos en el navegador</li>
+              </ul>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Qué se recuerda de cada transportista</h3>
+        <p>Dos memorias y un registro. Así el chofer no repite todo cada vez, y el ingenio nunca pierde un dato.</p>
+      </div>
+      <div class="mem">
+        <div>
+          <span class="k">Memoria de la charla</span>
+          <b>"Lo que hablamos hoy"</b>
+          <p>Los últimos mensajes de la conversación, para que el bot no vuelva a preguntar la patente que ya le dieron.</p>
+          <dl><dt>vive en</dt><dd>n8n</dd><dt>si se reinicia</dt><dd class="lost">se pierde (aceptable)</dd></dl>
+        </div>
+        <div>
+          <span class="k">Ficha del transportista</span>
+          <b>"Quién es"</b>
+          <p>Nombre, patente y finca habituales, y el último turno. Al día siguiente, el bot solo le pide que confirme.</p>
+          <dl><dt>vive en</dt><dd>API</dd><dt>si se reinicia</dt><dd class="kept">se mantiene</dd></dl>
+        </div>
+        <div>
+          <span class="k">Registro de mensajes</span>
+          <b>"Qué se dijo"</b>
+          <p>Cada mensaje que entra y sale. Es lo que el dashboard muestra en la vista del chatbot.</p>
+          <dl><dt>vive en</dt><dd>API</dd><dt>si se reinicia</dt><dd class="kept">se mantiene</dd></dl>
+        </div>
+      </div>
+      <p class="soft" style="font-size:14px">El bot reconoce al transportista <b>por su número de teléfono</b>, que llega solo en cada mensaje. Aunque recuerde la patente, igual la confirma: la memoria sirve para conversar mejor, pero no reemplaza a la API como fuente de datos.</p>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Dos conceptos que conviene tener claros</h3>
+      </div>
+      <div class="concepts">
+        <div class="concept">
+          <h3>Baileys</h3>
+          <p>Es una librería de código abierto que <b>se hace pasar por WhatsApp Web</b>. Al escanear el QR, WhatsApp cree que se vinculó una computadora más a ese número. Evolution API usa Baileys por dentro.</p>
+          <div class="vs">
+            <div class="h">Baileys (demo)</div><div class="h">Cloud API de Meta (real)</div>
+            <div>Gratis, se conecta con un QR</div><div>Se paga por conversación y requiere verificar la empresa</div>
+            <div>No oficial: el número puede ser bloqueado</div><div>Oficial, estable y con soporte</div>
+            <div>Ideal para prototipos</div><div>Obligatorio para producción</div>
+          </div>
+          <p class="soft" style="font-size:13.5px">Por eso se usa un número descartable, nunca se envían mensajes masivos y los transportistas simulados no reciben WhatsApp de verdad.</p>
+        </div>
+        <div class="concept">
+          <h3>La semilla</h3>
+          <p>Es el <b>punto de partida de la demo, siempre idéntico</b>. Como la posición inicial de las piezas en el ajedrez: cada partida arranca igual.</p>
+<pre><span class="c">// qué hay al abrir la demo</span>
+reloj de demo   <span class="k">09:30</span>
+ingenio         Ingenio Demo
+fincas          6, con su ruta y tiempo de viaje
+referencias     cruces, puentes, estaciones de servicio
+turnos          ~20 en distintos estados
+transportistas  ficticios, con patentes inventadas</pre>
+          <p class="soft" style="font-size:13.5px">Hoy el mockup genera datos al azar en cada recarga. Con semilla, dos ensayos seguidos se ven exactamente igual, y eso es lo que permite ensayar.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= PARTE 3 ================= -->
+  <div class="part" id="parte-3">
+    <div class="part-head">
+      <span class="n">Parte 3</span>
+      <h2>Detalle técnico</h2>
+      <p>Qué tiene exactamente la demo, qué parte del sistema real simula y qué hay que resolver antes de escribir código.</p>
+    </div>
+
+    <section>
+      <div class="sec-head">
+        <h3>Punto de partida: el mockup del dashboard</h3>
+        <p>Se ejecutó localmente (React 19 + Vite 8) y se probó con un navegador headless: 6 vistas en 1440 px y 390 px, alta y reasignación de un turno, cambio de molienda y recarga de la página. La arquitectura está bien resuelta: <code>composition/container.ts</code> es el único punto que elige entre mock y HTTP, y permite cambiar un repositorio a la vez.</p>
+      </div>
+      <div class="shots">
+        <figure><img src="img/desk-1.jpg" alt="Panel general del mockup" loading="lazy"><figcaption><b>Panel general.</b> KPIs, cola virtual y feed del bot.</figcaption></figure>
+        <figure><img src="img/desk-2.jpg" alt="Cola de turnos del mockup" loading="lazy"><figcaption><b>Cola de turnos.</b> Horarios hasta las 05:27, fuera del horario operativo.</figcaption></figure>
+        <figure><img src="img/desk-3.jpg" alt="Vista Chatbot WhatsApp del mockup" loading="lazy"><figcaption><b>Chatbot.</b> "42 turnos por el bot" con 30 turnos en total.</figcaption></figure>
+        <figure><img src="img/desk-5.jpg" alt="Reportes del mockup" loading="lazy"><figcaption><b>Reportes.</b> 92 % gestionado por el bot, contra 50 u 80 % en el panel.</figcaption></figure>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Impacto</th><th>Hallazgo</th><th>Consecuencia en la demo</th></tr></thead>
+          <tbody>
+            <tr><td><span class="chip crit">bloquea</span></td><td>"Marcar" en <em>Camiones en canchón</em> llama a <code>cancelar()</code><span class="where">PanelGeneralView.tsx:99</span></td><td>Comprobado: el canchón pasó de 3 a 2 camiones. Presionarlo borra un turno.</td></tr>
+            <tr><td><span class="chip crit">bloquea</span></td><td><code>AvanzarEstadoTurno</code> está conectado, pero ninguna vista lo usa<span class="where">TurnoUseCases.ts:54</span></td><td>No se puede mover un camión entre estados.</td></tr>
+            <tr><td><span class="chip crit">bloquea</span></td><td>Datos aleatorios y relativos a la hora real<span class="where">MockTurnoRepository.ts:52 · MockReporteRepository.ts:12</span></td><td>Cada recarga y cada poll de 15 s muestran otra cosa. No se puede ensayar.</td></tr>
+            <tr><td><span class="chip crit">bloquea</span></td><td>Estado en memoria del navegador</td><td>El turno creado desaparece al recargar y lo que escribe el bot nunca aparece.</td></tr>
+            <tr><td><span class="chip warn">confunde</span></td><td>Cifras contradictorias entre vistas</td><td>% del bot y totales de turnos no coinciden entre panel, chatbot y reportes.</td></tr>
+            <tr><td><span class="chip warn">confunde</span></td><td>"Conectado a WhatsApp Business API"</td><td>Se usa Evolution con Baileys. Conviene "WhatsApp · demo".</td></tr>
+            <tr><td><span class="chip low">menor</span></td><td>"Reasignar" usa <code>window.prompt</code>; el menú lateral usa <code>div</code>; el layout no se adapta a 390 px</td><td>Poco prolijo, pero no impide la demo si se proyecta en pantalla grande.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Qué es real y qué se simula</h3>
+        <p>La demo usa los mismos límites entre piezas que tendría el sistema real. Pasar a producción implica reemplazar piezas detrás de interfaces, no rediseñar.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pieza</th><th>En la demo</th><th>En el sistema real</th></tr></thead>
+          <tbody>
+            <tr><td>Canal WhatsApp</td><td><span class="chip real">real</span> Evolution + Baileys, número descartable</td><td>WhatsApp Cloud API oficial</td></tr>
+            <tr><td>Comprensión del mensaje</td><td><span class="chip real">real</span> Agente IA en n8n (OpenAI)</td><td>Igual, con más casos y controles</td></tr>
+            <tr><td>Transportistas</td><td><span class="chip mock">simulado</span> 1 o 2 celulares del equipo + simulador</td><td>Choferes reales</td></tr>
+            <tr><td>Cálculo del turno</td><td><span class="chip mock">simulado</span> Reglas fijas y predecibles</td><td>Teoría de colas con capacidad real de báscula y molienda</td></tr>
+            <tr><td>Posición del camión</td><td><span class="chip mock">simulado</span> Estimada con reloj de demo + pin de WhatsApp</td><td>GPS del camión o app del chofer</td></tr>
+            <tr><td>Fincas y rutas</td><td><span class="chip mock">simulado</span> 6 fincas ficticias con rutas precalculadas</td><td>Catastro o ERP del ingenio</td></tr>
+            <tr><td>Incidentes en ruta</td><td><span class="chip real">real</span> Reportados por chat (celular o simulador), ubicados por pin, km o punto de referencia</td><td>Igual, sumando telemetría del camión y aviso a la empresa de transporte</td></tr>
+            <tr><td>Estado de molienda</td><td><span class="chip mock">simulado</span> Un botón en el dashboard</td><td>Integrado con sistemas de planta</td></tr>
+            <tr><td>Persistencia</td><td><span class="chip real">real</span> SQLite con semilla</td><td>Postgres con backups</td></tr>
+            <tr><td>Acceso</td><td>Una API key</td><td>Usuarios, roles y auditoría</td></tr>
+            <tr><td>Reportes, configuración</td><td><span class="chip mock">mock fijo</span> en el dashboard</td><td>Calculados desde el histórico</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Contrato v2 de la API</h3>
+        <p>Base <code>/api/v1</code>, JSON, header <code>X-Api-Key</code>, timestamps RFC 3339 en UTC. Todas las respuestas llevan <code>simulated: true</code>. Primero se congela el contrato y después cada frente trabaja en paralelo contra stubs.</p>
+      </div>
+      <div class="endpoints">
+        <div class="ep-group">
+          <h4>Herramientas del agente <span>tools de n8n</span></h4>
+          <div class="ep"><span class="verb">POST</span><span class="path">/appointments</span><span class="why">Crea el turno y devuelve ventana, salida recomendada, prioridad y motivo.</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/appointments?phone=</span><span class="why">"¿Cuál era mi turno?"</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/status</span><span class="why">Demora actual y estado de la molienda.</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/drivers/{phone}<span class="chip warn">nuevo</span></span><span class="why">Ficha del transportista, para que solo tenga que confirmar.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/appointments/{id}/incidents<span class="chip warn">nuevo</span></span><span class="why">Solo después de que el chofer confirma. Tipo, ubicación (pin, km o referencia) y demora estimada. Congela la posición y libera la ventana.</span></div>
+        </div>
+        <div class="ep-group">
+          <h4>Llamadas fijas del workflow <span>no dependen del modelo</span></h4>
+          <div class="ep"><span class="verb">POST</span><span class="path">/conversations/messages<span class="chip warn">nuevo</span></span><span class="why">Registra cada mensaje de entrada y de salida. Si fuera una tool, el modelo podría olvidarse de llamarla.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/drivers/{phone}/location<span class="chip warn">nuevo</span></span><span class="why">Pin recibido: lo aplica al turno activo y devuelve la nueva hora de llegada para que el agente la comunique.</span></div>
+        </div>
+        <div class="ep-group">
+          <h4>Dashboard <span>panel del ingenio</span></h4>
+          <div class="ep"><span class="verb">GET</span><span class="path">/appointments?date=</span><span class="why">Cola del día: los mismos objetos que ve el agente.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/appointments</span><span class="why">Carga manual con <code>channel: "manual"</code>.</span></div>
+          <div class="ep"><span class="verb">PATCH</span><span class="path">/appointments/{id}<span class="chip warn">nuevo</span></span><span class="why">Reasigna la ventana.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/appointments/{id}/advance<span class="chip warn">nuevo</span></span><span class="why">Avanza al siguiente estado.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/appointments/{id}/cancel<span class="chip warn">nuevo</span></span><span class="why">Baja lógica con estado <code>cancelled</code>.</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/incidents/{id}/resolve<span class="chip warn">nuevo</span></span><span class="why">El operario marca el incidente como resuelto: el camión retoma y se recalcula la llegada.</span></div>
+          <div class="ep"><span class="verb">PUT</span><span class="path">/mill<span class="chip warn">nuevo</span></span><span class="why">Operando o detenida.</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/conversations<span class="chip warn">nuevo</span></span><span class="why">Chats registrados y métricas del bot.</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/drivers<span class="chip warn">nuevo</span></span><span class="why">Vista Transportistas con choferes que realmente escribieron.</span></div>
+          <div class="ep"><span class="verb">GET</span><span class="path">/trucks/positions<span class="chip warn">nuevo</span></span><span class="why">Posición estimada de cada camión en viaje, para el mapa.</span></div>
+        </div>
+        <div class="ep-group">
+          <h4>Control de la demo <span>solo para quien dirige</span></h4>
+          <div class="ep"><span class="verb">POST</span><span class="path">/demo/reset<span class="chip warn">nuevo</span></span><span class="why">Vuelve a la semilla.</span></div>
+          <div class="ep"><span class="verb">PUT</span><span class="path">/demo/clock<span class="chip warn">nuevo</span></span><span class="why">Pausa, reanuda y fija la velocidad del reloj (x1 a x60).</span></div>
+          <div class="ep"><span class="verb">POST</span><span class="path">/demo/scenarios/{name}<span class="chip warn">nuevo</span></span><span class="why">Dispara escenarios: "hora pico", "camión con pinchadura", "molienda detenida".</span></div>
+        </div>
+      </div>
+      <div class="cols">
+        <div class="note">
+          <h4>Turno (appointment): campos que se suman</h4>
+<pre>driverName      <span class="c">// chofer</span>
+fleet           own | contractor
+channel         whatsapp | manual
+status          pending | en_route | in_yard
+                unloading | completed | delayed | cancelled
+hoursSinceCut   <span class="c">// calculado por la API</span>
+waitMinutes     <span class="c">// calculado por la API</span>
+eta             <span class="c">// estimada; cambia con el pin</span>
+positionSource  estimated | pin
+incident        { type, lat, lng, locationSource: pin | km | landmark,
+                  reportedAt, estimatedDelayMin, resolvedAt }
+                <span class="c">// mientras está abierto: status = delayed</span></pre>
+        </div>
+        <div class="note">
+          <h4>Correspondencia con el dominio del dashboard</h4>
+<pre>pendiente    <span class="k">→</span> pending
+viaje        <span class="k">→</span> en_route
+cancha       <span class="k">→</span> in_yard
+descargando  <span class="k">→</span> unloading
+completado   <span class="k">→</span> completed
+demorado     <span class="k">→</span> delayed
+propia       <span class="k">→</span> own
+tercero      <span class="k">→</span> contractor</pre>
+          <p class="soft">La API habla inglés. La traducción al dominio en español vive en <code>infrastructure/http/</code> del dashboard, que es la capa de adaptadores.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>El simulador</h3>
+        <p>Una sola regla: <b>el estado es una función del reloj de demo</b>. Misma semilla y misma hora dan exactamente el mismo resultado. Nada usa <code>Math.random()</code>.</p>
+      </div>
+      <div class="cols">
+        <div class="note">
+          <h4>Reloj de demo</h4>
+          <p>Arranca a las 09:30 del día 42 de zafra y no depende de la hora real. Se puede pausar, acelerar (x1 a x60) y resetear. Así la demo se ve igual a las 10 de la mañana que a las 8 de la noche.</p>
+        </div>
+        <div class="note">
+          <h4>Ciclo de vida de un turno</h4>
+<pre>pending    <span class="k">→</span> en_route   <span class="c">al llegar la hora de salida</span>
+en_route   <span class="k">→</span> in_yard    <span class="c">salida + minutos de viaje</span>
+in_yard    <span class="k">→</span> unloading  <span class="c">cuando hay lugar en la ventana</span>
+unloading  <span class="k">→</span> completed  <span class="c">+ tiempo de descarga</span>
+<span class="c">con molienda detenida: in_yard no avanza</span></pre>
+        </div>
+        <div class="note">
+          <h4>Posición estimada</h4>
+<pre>progreso = (reloj − salida) / minutosViaje   <span class="c">// 0..1</span>
+posición = punto de la ruta al progreso %</pre>
+          <p>Las rutas de cada finca se calculan <b>una sola vez</b> con un servicio de ruteo sobre OpenStreetMap y se guardan como polilíneas en la semilla. En vivo no se consulta ningún servicio externo. Si no llega a hacerse, se usa línea recta.</p>
+        </div>
+        <div class="note">
+          <h4>Recalibración con pin</h4>
+          <ul class="clean">
+            <li>El pin se proyecta sobre la ruta y ese punto pasa a ser el nuevo progreso.</li>
+            <li>Llegada estimada = hora del pin + (1 − progreso) × minutos de viaje.</li>
+            <li>Si el pin queda a más de 2 km de la ruta, se toma una línea recta desde el pin al ingenio.</li>
+            <li><code>positionSource</code> pasa a <code>pin</code> y el mapa lo marca.</li>
+          </ul>
+        </div>
+        <div class="note">
+          <h4>Incidentes</h4>
+<pre>antes del incidente   <span class="k">→</span> avanza normal
+durante el incidente  <span class="k">→</span> congelado en el punto reportado
+después de resolverlo <span class="k">→</span> progreso = pInc + (reloj − resuelto) / minutosViaje
+llegada nueva         = resuelto + (1 − pInc) × minutosViaje</pre>
+          <ul class="clean">
+            <li><b>Pin:</b> se proyecta sobre la ruta.</li>
+            <li><b>Km desde la finca:</b> pInc = km / largo de la ruta en km.</li>
+            <li><b>Punto de referencia:</b> se busca en la tabla de la semilla. Si no hay coincidencia, el agente pide el pin.</li>
+            <li>El incidente es un evento con hora, así que la simulación sigue siendo determinista y se puede ensayar.</li>
+          </ul>
+        </div>
+        <div class="note">
+          <h4>Simulador de transportistas</h4>
+          <p>Un script lee un guion (JSON con eventos por minuto) y envía al webhook de n8n un JSON con <b>la misma forma que el de Evolution</b> (<code>docs/samples/</code>), con el header <code>X-AgroFlow-Simulated: true</code> y teléfonos imposibles (<code>5490000000001</code>). Evolution nunca recibe esos mensajes.</p>
+        </div>
+        <div class="note">
+          <h4>Supuestos numéricos a validar</h4>
+<pre>molienda          340 t/h     <span class="c">// mockup</span>
+carga por camión  ~28 t       <span class="c">// a confirmar</span>
+velocidad media   ~45 km/h    <span class="c">// a confirmar</span>
+descarga          ~15 min     <span class="c">// a confirmar</span>
+ventana           30 min
+capacidad         340 × 0,5 / 28 ≈ 6 camiones
+factor de ruta    1,3 × distancia en línea recta</pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Chatbot: cambios en n8n</h3>
+        <p>El circuito de WhatsApp ya está probado con un mensaje real. Se reemplaza el HTTP Request que hoy llama al stub por el agente, y se suman dos ramas.</p>
+      </div>
+<pre>Webhook
+  <span class="k">→</span> Respond 200                    <span class="c">// primero confirmar, para que Evolution no reintente</span>
+  <span class="k">→</span> Filter                         <span class="c">// conversation | locationMessage · !fromMe · !@g.us</span>
+  <span class="k">→</span> Normalize                      <span class="c">// + kind, lat, lng, simulated</span>
+  <span class="k">→</span> POST /conversations/messages   <span class="c">// entrada</span>
+  <span class="k">→</span> IF kind = location <span class="k">→</span> POST /drivers/{phone}/location
+  <span class="k">→</span> AI Agent                       <span class="c">// Simple Memory (sesión = chatId) + 5 tools</span>
+  <span class="k">→</span> POST /conversations/messages   <span class="c">// salida</span>
+  <span class="k">→</span> IF !simulated <span class="k">→</span> Evolution sendText</pre>
+      <div class="cols">
+        <div class="note">
+          <h4>Detalles verificados</h4>
+          <ul class="clean">
+            <li>El texto llega en <code>data.message.conversation</code>. Ya se capturó un payload real.</li>
+            <li>El pin llega como <code>data.message.locationMessage.degreesLatitude / degreesLongitude</code>, según la documentación de Evolution. <b>Falta capturar uno real.</b></li>
+            <li>Con un Webhook como trigger, la Simple Memory necesita la clave de sesión definida a mano; si no, falla con <code>No sessionId</code>.</li>
+            <li>La hora se toma de <code>messageTimestamp</code>, porque <code>date_time</code> llega desfasado 3 h.</li>
+          </ul>
+        </div>
+        <div class="note">
+          <h4>Decisiones de diseño</h4>
+          <ul class="clean">
+            <li>No se usa la "ubicación en tiempo real" de WhatsApp: con Baileys, las actualizaciones no llegan de forma confiable a un dispositivo vinculado.</li>
+            <li>La Simple Memory se pierde si n8n se reinicia. Es aceptable porque la ficha y los turnos viven en la API. Si molesta, se pasa a Postgres Chat Memory.</li>
+            <li>Mensajes en ráfaga: en la demo se escribe de a un mensaje. En producción se agrupan con una espera corta.</li>
+            <li>Incidentes: "me quedé" puede significar muchas cosas. El prompt obliga a confirmar ("¿Querés que avise al ingenio que estás detenido?") antes de llamar a <code>reportIncident</code>. Se prueba con variantes como "pinché", "se rompió", "estoy parado" o "me quedé sin señal".</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Dashboard: cambios</h3>
+      </div>
+      <div class="cols">
+        <div class="note">
+          <h4>Conexión híbrida</h4>
+<pre><span class="c">// composition/container.ts</span>
+<span class="k">const</span> source = import.meta.env.VITE_DATA_SOURCE; <span class="c">// "mock" | "http"</span>
+<span class="k">const</span> turnoRepository = source === <span class="k">"http"</span>
+  ? <span class="k">new</span> HttpTurnoRepository(API_URL)
+  : <span class="k">new</span> MockTurnoRepository();
+<span class="c">// Reportes y Configuración: siempre Mock (fijos)</span></pre>
+          <p>Con <code>VITE_DATA_SOURCE=mock</code>, el dashboard funciona sin API. Es el plan B si algo falla en vivo.</p>
+        </div>
+        <div class="note">
+          <h4>Trabajo concreto</h4>
+          <ul class="clean">
+            <li><code>HttpTurnoRepository</code>, <code>HttpConversacionRepository</code> y <code>HttpTransportistaRepository</code>, con el mapeo inglés → español.</li>
+            <li>Vista de mapa nueva con Leaflet y tiles de OpenStreetMap (con atribución), en estética oscura verde. Consulta <code>/trucks/positions</code> cada 3 a 5 s y anima los marcadores entre puntos.</li>
+            <li>Consultas cada 5 s en la cola y el panel.</li>
+            <li>Incidentes: marcador de alerta en el mapa, fila destacada como "Demorado" y botón "Resuelto" que llama a <code>/incidents/{id}/resolve</code>.</li>
+            <li>Arreglar "Marcar", agregar el botón "Avanzar" y reemplazar <code>window.prompt</code>.</li>
+            <li>Mostrar la marca "simulado" en filas y en el mapa.</li>
+            <li>La prioridad viene de la API: dejar de recalcularla en <code>ColaTurnosView.tsx:186</code>.</li>
+            <li>Mocks deterministas con el reloj de demo, para el plan B.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Riesgos y respaldos</h3>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Riesgo</th><th>Respaldo</th></tr></thead>
+          <tbody>
+            <tr><td>WhatsApp bloquea el número (Baileys no es oficial)</td><td>Número descartable, sin envíos masivos; los simulados nunca pasan por Evolution. Video grabado de la demo.</td></tr>
+            <tr><td>El modelo responde algo inesperado en vivo</td><td>Guion ensayado, prompt con ejemplos y números siempre tomados de la API.</td></tr>
+            <tr><td>El modelo registra un incidente que no existe</td><td>Confirmación explícita del chofer antes de llamar a la herramienta. El operario puede cerrarlo desde el dashboard.</td></tr>
+            <tr><td>Se cae la API o el VPS</td><td>Dashboard con <code>VITE_DATA_SOURCE=mock</code> + video.</td></tr>
+            <tr><td>Memoria del VPS (n8n ya necesitó 896 MiB)</td><td>Medir el consumo de la API antes de desplegar y fijarle un límite en Compose.</td></tr>
+            <tr><td>Alguien toma la posición estimada por GPS real</td><td>Etiqueta visible "posición estimada · simulado" en el mapa y en las filas.</td></tr>
+            <tr><td>Datos personales</td><td>Todos ficticios o descartables. Nada de patentes, choferes ni ingenios reales.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Reparto y orden de trabajo</h3>
+        <p>Cuatro frentes en paralelo sobre un mismo contrato. La fecha de la demo es tentativa (un par de semanas), así que el orden se define por fases y no por días.</p>
+      </div>
+      <div class="tracks">
+        <div class="track"><span class="k">API</span><h3>Servicio y simulador</h3><ul><li>Contrato v2 en <code>docs/API_CONTRACT.md</code></li><li>Endpoints, SQLite y semilla</li><li>Reloj de demo, ciclo de vida y posiciones</li><li>Incidentes: congelar, liberar ventana y retomar</li><li><code>IAppointmentScheduler</code> simulado</li></ul></div>
+        <div class="track"><span class="k">Dashboard</span><h3>Conexión y mapa</h3><ul><li>Repositorios Http y <code>VITE_DATA_SOURCE</code></li><li>Vista de mapa</li><li>Alertas de incidentes</li><li>Arreglos del mockup</li><li>Mocks deterministas</li></ul></div>
+        <div class="track"><span class="k">n8n</span><h3>Agente y simulador</h3><ul><li>AI Agent + memoria + tools</li><li>Detección y confirmación de incidentes</li><li>Ramas de ubicación y registro</li><li>Captura de un pin real</li><li>Script simulador de transportistas</li></ul></div>
+        <div class="track"><span class="k">Infra y ensayo</span><h3>Publicación</h3><ul><li>API y dashboard en el VPS</li><li>Ruteo público (DNS pendiente)</li><li>Guion de escenarios</li><li>Video de respaldo y ensayos</li></ul></div>
+      </div>
+      <div class="phases">
+        <div class="ph gate"><span class="d">Fase 1</span><b>Contrato congelado</b><span>Contrato v2, semilla y supuestos validados. Stubs listos en n8n.</span></div>
+        <div class="ph"><span class="d">Fase 2</span><b>Construir en paralelo</b><span>API, repositorios Http, mapa y agente, cada uno contra stubs.</span></div>
+        <div class="ph gate"><span class="d">Fase 3</span><b>Integrar y publicar</b><span>URLs reales, VPS y primera pasada completa del guion.</span></div>
+        <div class="ph"><span class="d">Fase 4</span><b>Ensayar</b><span>Varias pasadas con reset, grabar el video y ajustar el prompt.</span></div>
+      </div>
+      <p class="soft" style="font-size:14px">Si el tiempo no alcanza, se recorta en este orden: tabla de puntos de referencia (se pide el pin), rutas reales (se usa línea recta), simulador de transportistas, vista de chats. Lo que no se recorta: turno por WhatsApp, aparición en la cola y camión moviéndose en el mapa.</p>
+    </section>
+
+    <section>
+      <div class="sec-head">
+        <h3>Para decidir en equipo</h3>
+      </div>
+      <div class="decisions">
+        <div class="decision"><span class="q">¿En qué stack se hace la API?</span><p>.NET es la dirección provisional y encaja con la separación en capas prevista; requiere instalar el SDK. Node + TypeScript comparte lenguaje y tipos con el dashboard. <b>Criterio:</b> pesa más que quien la construya lo domine. El contrato no depende del lenguaje.</p></div>
+        <div class="decision"><span class="q">¿Hora y velocidad del reloj de demo?</span><p>Mañana de zafra (09:30) deja la cola a medio llenar y lugar para turnos nuevos. En el escenario, x10 da tiempo a explicar; x60 sirve para mostrar un viaje completo. <b>Recomendación:</b> 09:30 con cambio de velocidad en vivo.</p></div>
+        <div class="decision"><span class="q">¿Qué fincas y coordenadas?</span><p>6 fincas ficticias con coordenadas plausibles de la zona cañera, a 10–60 km del ingenio. <b>Recomendación:</b> mismos nombres que ya muestra el dashboard y ningún dato de establecimientos reales.</p></div>
+        <div class="decision"><span class="q">¿Quién valida los números del rubro?</span><p>Carga por camión, velocidad media y tiempo de descarga son supuestos. <b>Recomendación:</b> una consulta corta con alguien que conozca la operación de un ingenio antes de congelar la semilla.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>Fuentes: mockup AgroFlow-Dashboard ejecutado localmente, <code>docs/API_CONTRACT.md</code>, documentación de Evolution API v2 y n8n, e issue #1026 de Baileys (live location).</span>
+    <span>Mapa, conversaciones, patentes y fincas son ficticios y solo ilustran la demo.</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var FINCAS = [
+    { name: "Los Álamos", travel: 50, lx: 118, ly: 412, anchor: "middle" },
+    { name: "San José", travel: 40, lx: 150, ly: 86, anchor: "middle" },
+    { name: "El Retiro", travel: 30, lx: 330, ly: 484, anchor: "middle" },
+    { name: "La Esperanza", travel: 25, lx: 804, ly: 62, anchor: "end" },
+    { name: "Don Pedro", travel: 35, lx: 804, ly: 456, anchor: "end" },
+    { name: "El Bañado", travel: 55, lx: 54, ly: 226, anchor: "start" }
+  ];
+  var TRUCKS = [
+    { plate: "AN 777 GH", f: 0, dep: 535, fleet: "own" },
+    { plate: "AM 150 DE", f: 5, dep: 540, fleet: "contractor" },
+    { plate: "AB 214 CD", f: 0, dep: 560, fleet: "own" },
+    { plate: "AC 377 FE", f: 1, dep: 575, fleet: "contractor" },
+    { plate: "AD 902 KL", f: 2, dep: 585, fleet: "own" },
+    { plate: "AE 118 PQ", f: 3, dep: 590, fleet: "own" },
+    { plate: "AF 560 RS", f: 4, dep: 600, fleet: "contractor" },
+    { plate: "AG 731 TU", f: 5, dep: 610, fleet: "own", inc: { at: 625, resolved: 655, type: "pinchadura" } },
+    { plate: "AH 245 VW", f: 1, dep: 630, fleet: "own" },
+    { plate: "AJ 889 XY", f: 3, dep: 645, fleet: "contractor" },
+    { plate: "AK 403 ZA", f: 2, dep: 660, fleet: "own" },
+    { plate: "AL 612 BC", f: 4, dep: 690, fleet: "own" },
+    { plate: "AA 123 BC", f: 0, dep: 612, fleet: "own", feat: true, created: 604, pinAt: 640, pinP: 0.7 }
+  ];
+  var EVENTS = [
+    { t: 570, k: "sys", x: "Demo reseteada · semilla cargada" },
+    { t: 603, k: "in", who: "Juan", x: "Patente AA 123 BC, salgo de Los Álamos, corté a las 7" },
+    { t: 604, k: "out", x: "Turno 11:00–11:30 · salí 10:12 · prioridad normal" },
+    { t: 604, k: "sys", x: "API: turno creado → cola y mapa" },
+    { t: 612, k: "sys", x: "AA 123 BC salió de Los Álamos" },
+    { t: 624, k: "in", who: "AG 731 TU", x: "Se me pinchó una goma, estoy a unos 11 km de El Bañado" },
+    { t: 625, k: "out", x: "¿Aviso al ingenio que estás detenido? Mandame tu ubicación" },
+    { t: 626, k: "in", who: "AG 731 TU", x: "Sí, avisá · ubicación" },
+    { t: 626, k: "warn", x: "Incidente: AG 731 TU detenido · turno liberado" },
+    { t: 640, k: "in", who: "Juan", x: "Ubicación actual" },
+    { t: 640, k: "sys", x: "Pin recibido · llegada 11:02 → 10:55" },
+    { t: 641, k: "out", x: "Vas mejor de lo previsto: llegás 10:55" },
+    { t: 655, k: "sys", x: "AA 123 BC llegó al canchón" },
+    { t: 655, k: "sys", x: "Incidente resuelto · AG 731 TU llega 11:35" },
+    { t: 672, k: "warn", x: "Operario detuvo la molienda" },
+    { t: 673, k: "in", who: "AP 318 JK", x: "¿Salgo ya desde Don Pedro?" },
+    { t: 674, k: "out", x: "Molienda detenida: esperá en la finca" },
+    { t: 690, k: "sys", x: "Molienda reanudada" }
+  ];
+  var LOOP_START = 570, LOOP_END = 720, START = 598, YARD = 8, UNLOAD = 14, STOP = [672, 690];
+  var NS = "http://www.w3.org/2000/svg";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var routes = FINCAS.map(function (_, i) { return document.getElementById("route-" + i); });
+  var lengths = routes.map(function (r) { return r.getTotalLength(); });
+  var gTrucks = document.getElementById("trucks");
+  var gHl = document.getElementById("route-hl");
+  var gPin = document.getElementById("pinmark");
+  var elClock = document.getElementById("clock");
+  var elList = document.getElementById("truck-list");
+  var elFeed = document.getElementById("feed");
+  var elCount = document.getElementById("count");
+  var elBanner = document.getElementById("banner");
+  var btnPlay = document.getElementById("btn-play");
+
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function hhmm(m) {
+    m = Math.floor(m);
+    return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+  }
+
+  // Cane field parcels from a fixed-seed PRNG, so the map is identical on every load.
+  (function fields() {
+    var s = 42;
+    function rnd() { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }
+    var g = document.getElementById("fields");
+    for (var i = 0; i < 70; i++) {
+      var x = rnd() * 800, y = rnd() * 480, w = 30 + rnd() * 70, h = 18 + rnd() * 40, a = -25 + rnd() * 50;
+      el("rect", { x: x, y: y, width: w, height: h, fill: i % 3 ? "#0a150e" : "#0c1a11", stroke: "#0f2016", "stroke-width": 1, transform: "rotate(" + a.toFixed(1) + " " + (x + w / 2).toFixed(1) + " " + (y + h / 2).toFixed(1) + ")" }, g);
+    }
+  })();
+
+  (function fincas() {
+    var g = document.getElementById("fincas");
+    FINCAS.forEach(function (f, i) {
+      var p = routes[i].getPointAtLength(0);
+      el("circle", { cx: p.x, cy: p.y, r: 6, fill: "#0d1f15", stroke: "#6f8f79", "stroke-width": 1.5 }, g);
+      var t = el("text", { x: f.lx, y: f.ly, "text-anchor": f.anchor, fill: "#8fa597", "font-size": 11 }, g);
+      t.textContent = "Finca " + f.name;
+    });
+  })();
+
+  function stateOf(tr, t) {
+    var travel = FINCAS[tr.f].travel, progress, eta, source = "estimated";
+    if (tr.feat) {
+      if (t < tr.created) return null;
+      if (t < tr.pinAt) { progress = (t - tr.dep) / travel; eta = tr.dep + travel; }
+      else { progress = tr.pinP + (t - tr.pinAt) / travel; eta = tr.pinAt + (1 - tr.pinP) * travel; source = "pin"; }
+    } else {
+      if (t < tr.dep - 15) return null;
+      progress = (t - tr.dep) / travel; eta = tr.dep + travel;
+      // Incident: frozen at the reported point until resolved, then resumes from there.
+      if (tr.inc && t >= tr.inc.at) {
+        var pInc = (tr.inc.at - tr.dep) / travel;
+        if (t < tr.inc.resolved) return { status: "incident", p: pInc, eta: null, source: source };
+        progress = pInc + (t - tr.inc.resolved) / travel;
+        eta = tr.inc.resolved + (1 - pInc) * travel;
+      }
+    }
+    var stopped = t >= STOP[0] && t < STOP[1];
+    if (progress < 0) return { status: "pending", p: 0, eta: eta, source: source };
+    if (progress < 1) return { status: "en_route", p: progress, eta: eta, source: source };
+    var since = t - eta;
+    // While the mill is stopped, trucks in the yard do not advance.
+    var stopShift = Math.max(0, Math.min(t, STOP[1]) - Math.max(eta, STOP[0]));
+    since -= stopShift;
+    if (since < YARD) return { status: stopped ? "stopped" : "in_yard", p: 1, eta: eta, source: source };
+    if (since < YARD + UNLOAD) return { status: stopped ? "stopped" : "unloading", p: 1, eta: eta, source: source };
+    return null;
+  }
+
+  var markers = {};
+  function marker(tr) {
+    if (markers[tr.plate]) return markers[tr.plate];
+    var g = el("g", {}, gTrucks);
+    var halo = el("circle", { r: tr.feat ? 14 : 10, fill: "#9ee870", opacity: 0.16 }, g);
+    var dot = el("circle", { r: tr.feat ? 7 : 5.5, "stroke-width": 1.5 }, g);
+    var title = el("title", {}, g);
+    title.textContent = tr.plate;
+    var label = null;
+    if (tr.feat) {
+      label = el("g", {}, g);
+      el("rect", { x: 10, y: -24, width: 74, height: 17, fill: "#0b1208", stroke: "#9ee870", "stroke-width": 1 }, label);
+      var tx = el("text", { x: 47, y: -12, "text-anchor": "middle", fill: "#9ee870", "font-size": 10.5 }, label);
+      tx.textContent = tr.plate;
+    }
+    var alert = null;
+    if (tr.inc) {
+      alert = el("g", { visibility: "hidden" }, g);
+      el("path", { d: "M0 -30 L9 -15 L-9 -15 z", fill: "#d89b63", stroke: "#070b09", "stroke-width": 1 }, alert);
+      var ex = el("text", { x: 0, y: -17.5, "text-anchor": "middle", fill: "#070b09", "font-size": 10, "font-weight": 600 }, alert);
+      ex.textContent = "!";
+      var lt = el("text", { x: 14, y: -18, fill: "#d89b63", "font-size": 10.5 }, alert);
+      lt.textContent = tr.plate + " · " + tr.inc.type;
+    }
+    markers[tr.plate] = { g: g, halo: halo, dot: dot, alert: alert };
+    return markers[tr.plate];
+  }
+
+  var lastFeedCount = -1, lastMinute = -1, pulseShown = false;
+  function render(t) {
+    elClock.textContent = hhmm(t);
+    var active = {}, yardIdx = 0, rows = [];
+    var yardOrder = TRUCKS.map(function (tr) { return { tr: tr, s: stateOf(tr, t) }; })
+      .filter(function (o) { return o.s; })
+      .sort(function (a, b) { return a.s.eta - b.s.eta; });
+
+    TRUCKS.forEach(function (tr) {
+      var s = stateOf(tr, t);
+      var m = markers[tr.plate];
+      if (!s) { if (m) m.g.setAttribute("visibility", "hidden"); return; }
+      m = marker(tr);
+      m.g.setAttribute("visibility", "visible");
+      var x, y;
+      if (s.status === "pending" || s.status === "en_route" || s.status === "incident") {
+        var pt = routes[tr.f].getPointAtLength(lengths[tr.f] * s.p);
+        x = pt.x; y = pt.y;
+        if (s.status === "en_route") active[tr.f] = true;
+      }
+      if (m.alert) m.alert.setAttribute("visibility", s.status === "incident" ? "visible" : "hidden");
+      var color = tr.fleet === "own" ? "#9ee870" : "#a9bcb0";
+      if (s.status === "stopped" || s.status === "incident") color = "#d89b63";
+      if (s.status === "pending") {
+        m.dot.setAttribute("fill", "#070b09"); m.dot.setAttribute("stroke", color); m.halo.setAttribute("opacity", 0);
+      } else {
+        m.dot.setAttribute("fill", color); m.dot.setAttribute("stroke", "#070b09");
+        m.halo.setAttribute("fill", color); m.halo.setAttribute("opacity", s.status === "incident" ? 0.3 : (s.status === "en_route" ? 0.18 : 0.08));
+      }
+      rows.push({ tr: tr, s: s });
+      m.pos = { x: x, y: y };
+    });
+
+    // Yard slots, ordered by arrival.
+    yardOrder.forEach(function (o) {
+      if (o.s.status === "in_yard" || o.s.status === "unloading" || o.s.status === "stopped") {
+        var m = markers[o.tr.plate];
+        var col = yardIdx % 5, row = Math.floor(yardIdx / 5);
+        m.pos = { x: 630 + col * 17, y: 282 + row * 18 };
+        yardIdx++;
+      }
+    });
+    TRUCKS.forEach(function (tr) {
+      var m = markers[tr.plate];
+      if (m && m.pos) m.g.setAttribute("transform", "translate(" + m.pos.x.toFixed(1) + " " + m.pos.y.toFixed(1) + ")");
+    });
+
+    // Highlight routes that currently carry a truck.
+    while (gHl.firstChild) gHl.removeChild(gHl.firstChild);
+    Object.keys(active).forEach(function (i) {
+      el("path", { d: routes[i].getAttribute("d"), fill: "none", stroke: "#9ee870", "stroke-width": 2.5, opacity: 0.35, "stroke-dasharray": "6 6" }, gHl);
+    });
+
+    // Pin marker for the featured truck.
+    var feat = TRUCKS[TRUCKS.length - 1];
+    var fs = stateOf(feat, t);
+    while (gPin.firstChild) gPin.removeChild(gPin.firstChild);
+    if (fs && t >= feat.pinAt && fs.status === "en_route") {
+      var pp = routes[feat.f].getPointAtLength(lengths[feat.f] * feat.pinP);
+      var gp = el("g", { transform: "translate(" + pp.x.toFixed(1) + " " + pp.y.toFixed(1) + ")" }, gPin);
+      if (t < feat.pinAt + 6 && !reduce) el("circle", { r: 8, fill: "none", stroke: "#9ee870", "stroke-width": 2, class: "pulse" }, gp);
+      el("path", { d: "M0 0 C -6 -8 -6 -16 0 -16 C 6 -16 6 -8 0 0 z", fill: "#d89b63", stroke: "#070b09", "stroke-width": 1 }, gp);
+      var tp = el("text", { x: 0, y: 14, "text-anchor": "middle", fill: "#d89b63", "font-size": 9.5 }, gp);
+      tp.textContent = "pin " + hhmm(feat.pinAt);
+    }
+
+    elBanner.hidden = !(t >= STOP[0] && t < STOP[1]);
+
+    var minute = Math.floor(t);
+    if (minute !== lastMinute) {
+      lastMinute = minute;
+      var order = { incident: 0, en_route: 1, pending: 2, stopped: 3, in_yard: 3, unloading: 4 };
+      rows.sort(function (a, b) {
+        if (a.tr.feat !== b.tr.feat) return a.tr.feat ? -1 : 1;
+        return (order[a.s.status] - order[b.s.status]) || (a.s.eta - b.s.eta);
+      });
+      var labels = { en_route: "en viaje", pending: "por salir", in_yard: "en canchón", unloading: "descargando", stopped: "detenido", incident: "incidente" };
+      elCount.textContent = rows.length;
+      elList.innerHTML = rows.slice(0, 8).map(function (r) {
+        var eta = r.s.status === "en_route" || r.s.status === "pending" ? hhmm(r.s.eta) : "—";
+        var src = r.s.source === "pin" && r.s.status === "en_route" ? " · pin" : "";
+        return '<li class="' + (r.tr.feat ? "feat" : "") + '"><span class="pl">' + r.tr.plate + '</span><span class="fc">' + FINCAS[r.tr.f].name + src + '</span><span class="eta">' + eta + '</span><span class="st ' + r.s.status + '">' + labels[r.s.status] + "</span></li>";
+      }).join("");
+    }
+
+    var visible = EVENTS.filter(function (e) { return e.t <= t; });
+    if (visible.length !== lastFeedCount) {
+      lastFeedCount = visible.length;
+      elFeed.innerHTML = visible.slice(-6).map(function (e) {
+        var body = e.k === "in" ? "<b>" + e.who + ":</b> " + e.x : (e.k === "out" ? "Bot: " + e.x : e.x);
+        return '<li><span class="tm">' + hhmm(e.t) + '</span><span class="' + e.k + '">' + body + "</span></li>";
+      }).join("");
+    }
+  }
+
+  var t = reduce ? 642 : START, playing = !reduce, last = null;
+  btnPlay.textContent = playing ? "Pausar" : "Reproducir";
+  function frame(ts) {
+    if (last === null) last = ts;
+    var dt = Math.min(0.25, (ts - last) / 1000);
+    last = ts;
+    if (playing) {
+      t += dt; // x60: one real second is one demo minute
+      if (t >= LOOP_END) { t = LOOP_START; lastFeedCount = -1; lastMinute = -1; }
+      render(t);
+    }
+    requestAnimationFrame(frame);
+  }
+  btnPlay.addEventListener("click", function () {
+    playing = !playing;
+    btnPlay.textContent = playing ? "Pausar" : "Reproducir";
+    last = null;
+  });
+  document.getElementById("btn-reset").addEventListener("click", function () {
+    t = LOOP_START; lastFeedCount = -1; lastMinute = -1; render(t);
+  });
+  render(t);
+  requestAnimationFrame(frame);
+})();
+</script>

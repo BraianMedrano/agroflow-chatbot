@@ -1,0 +1,180 @@
+name: agroflow-demo
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION}
+    container_name: agroflow-n8n
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=512
+      N8N_HOST: localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: http://localhost:${N8N_BIND_PORT}/
+      N8N_WEBHOOK_URL: http://localhost:${N8N_BIND_PORT}/
+      N8N_PROXY_HOPS: "0"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      GENERIC_TIMEZONE: ${TIMEZONE}
+      TZ: ${TIMEZONE}
+    ports:
+      - "127.0.0.1:${N8N_BIND_PORT}:5678"
+    expose:
+      - "5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - agroflow_backend
+    mem_limit: 896m
+    cpus: "0.60"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5678/healthz/readiness').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+    stop_grace_period: 30s
+    logging: *default-logging
+
+  evolution:
+    image: evoapicloud/evolution-api:v${EVOLUTION_VERSION}
+    container_name: agroflow-evolution
+    restart: unless-stopped
+    init: true
+    environment:
+      SERVER_NAME: agroflow-evolution
+      SERVER_TYPE: http
+      SERVER_PORT: "8080"
+      SERVER_URL: ${EVOLUTION_SERVER_URL}
+      TZ: ${TIMEZONE}
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "false"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${EVOLUTION_DB_USER}:${EVOLUTION_DB_PASSWORD}@evolution-postgres:5432/${EVOLUTION_DB_NAME}?schema=evolution_api
+      DATABASE_CONNECTION_CLIENT_NAME: agroflow_evolution
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://evolution-redis:6379/0
+      CACHE_REDIS_PREFIX_KEY: agroflow_demo
+      CACHE_LOCAL_ENABLED: "false"
+      TELEMETRY_ENABLED: "false"
+      LOG_LEVEL: ERROR,WARN,INFO
+      LOG_COLOR: "false"
+      LOG_BAILEYS: error
+      WEBHOOK_GLOBAL_ENABLED: "false"
+    ports:
+      - "127.0.0.1:${EVOLUTION_BIND_PORT}:8080"
+    expose:
+      - "8080"
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - agroflow_backend
+    depends_on:
+      evolution-postgres:
+        condition: service_healthy
+      evolution-redis:
+        condition: service_healthy
+    mem_limit: 768m
+    cpus: "0.70"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const socket = require('node:net').connect(8080, '127.0.0.1', () => { socket.end(); process.exit(0); }); socket.setTimeout(5000, () => process.exit(1)); socket.on('error', () => process.exit(1));"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    stop_grace_period: 30s
+    logging: *default-logging
+
+  evolution-postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: agroflow-evolution-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${EVOLUTION_DB_NAME}
+      POSTGRES_USER: ${EVOLUTION_DB_USER}
+      POSTGRES_PASSWORD: ${EVOLUTION_DB_PASSWORD}
+    expose:
+      - "5432"
+    volumes:
+      - evolution_postgres_data:/var/lib/postgresql/data
+    networks:
+      - agroflow_backend
+    mem_limit: 384m
+    cpus: "0.35"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    stop_grace_period: 30s
+    logging: *default-logging
+
+  evolution-redis:
+    image: redis:${REDIS_VERSION}
+    container_name: agroflow-evolution-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - allkeys-lru
+    expose:
+      - "6379"
+    volumes:
+      - evolution_redis_data:/data
+    networks:
+      - agroflow_backend
+    mem_limit: 192m
+    cpus: "0.15"
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    stop_grace_period: 20s
+    logging: *default-logging
+
+volumes:
+  n8n_data:
+    name: agroflow_demo_n8n_data
+  evolution_instances:
+    name: agroflow_demo_evolution_instances
+  evolution_postgres_data:
+    name: agroflow_demo_evolution_postgres_data
+  evolution_redis_data:
+    name: agroflow_demo_evolution_redis_data
+
+# The dedicated bridge remains outbound-capable because n8n and Evolution need
+# Internet access. Only n8n and Evolution publish loopback management ports.
+networks:
+  agroflow_backend:
+    name: agroflow_demo_backend
+    driver: bridge

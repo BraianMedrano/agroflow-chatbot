@@ -1,0 +1,64 @@
+{
+  "name": "stub-agroflow-api",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stub-chat-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "41596e09-c7e4-4895-bfb5-9ff394a9e0f2",
+      "name": "Webhook",
+      "webhookId": "23b30856-608e-482c-bbc2-b6280b7c6fac"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"reply\": {\n    \"type\": \"text\",\n    \"text\": \"¡Hola! Soy el asistente de AgroFlow. Te ayudaré a solicitar un turno para ingresar al ingenio. Para comenzar, enviame la patente del camión.\"\n  },\n  \"conversation\": {\n    \"phone\": \"stub\",\n    \"previousState\": \"NEW\",\n    \"state\": \"AWAITING_PLATE\"\n  },\n  \"appointment\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "761e10be-fa75-403d-9f35-f91ceba3b1ee",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4552f6a3-5652-4597-b353-0453b6fe208b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bbd79d5dcecdd772f4be4c1fa61285d1f3dabb4d351bf05edf26fe5dc91cb8d5"
+  },
+  "nodeGroups": [],
+  "id": "hHTAFA31jf09mWB7",
+  "tags": []
+}

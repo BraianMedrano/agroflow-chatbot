@@ -1,0 +1,45 @@
+{
+  "_comment": "Real MESSAGES_UPSERT payload captured from Evolution API v2.3.7 (Baileys channel), plain-text message. Identifiers, phone numbers and the webhook UUID are redacted. Crypto noise under data.message.messageContextInfo was trimmed - it is never used for mapping.",
+  "_capturedAt": "2026-09-04",
+  "headers": {
+    "content-type": "application/json",
+    "user-agent": "axios/1.13.2",
+    "host": "agroflow-n8n:5678"
+  },
+  "params": {},
+  "query": {},
+  "body": {
+    "event": "messages.upsert",
+    "instance": "agroflow-demo",
+    "data": {
+      "key": {
+        "remoteJid": "<COUNTERPARTY_MSISDN>@s.whatsapp.net",
+        "remoteJidAlt": "<COUNTERPARTY_MSISDN>@s.whatsapp.net",
+        "fromMe": false,
+        "id": "<MESSAGE_ID>",
+        "participant": "",
+        "addressingMode": "lid"
+      },
+      "pushName": "<DISPLAY_NAME>",
+      "status": "DELIVERY_ACK",
+      "message": {
+        "conversation": "Hola",
+        "messageContextInfo": {
+          "_trimmed": "deviceListMetadata / messageSecret / key hashes - E2E crypto metadata, not used for mapping",
+          "deviceListMetadataVersion": 2
+        }
+      },
+      "messageType": "conversation",
+      "messageTimestamp": 1788533367,
+      "instanceId": "<INSTANCE_UUID>",
+      "source": "ios"
+    },
+    "destination": "http://agroflow-n8n:5678/webhook-test/<WEBHOOK_UUID>",
+    "date_time": "2026-09-04T11:49:27.454Z",
+    "sender": "<INSTANCE_OWN_MSISDN>@s.whatsapp.net",
+    "server_url": "http://localhost:8080",
+    "apikey": null
+  },
+  "webhookUrl": "http://localhost:5678/webhook-test/<WEBHOOK_UUID>",
+  "executionMode": "test"
+}
