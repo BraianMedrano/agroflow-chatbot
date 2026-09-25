@@ -141,3 +141,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local tooling and operating-system metadata
+.codegraph/
+.DS_Store
+
+# Local infrastructure configuration
+infra/.env
+# Local Pi runtime state
+.atl/
