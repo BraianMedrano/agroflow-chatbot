@@ -1,187 +1,208 @@
-# AgroFlow API contract
+# AgroFlow API consumer guide for the local chatbot demo
 
-The boundary between n8n and the AgroFlow API.
+## Authority
 
-**This describes a demo.** The API simulates; it does not compute anything real.
-The contract is designed so the simulation can later be replaced by real logic
-without any consumer noticing, but nothing here should be built as if the real
-system were being written today.
+The canonical HTTP contract is `docs/contracts/openapi.yaml` in the
+[`agustinvallante/AgroFlow`](https://github.com/agustinvallante/AgroFlow)
+repository. This document explains how the n8n workflow consumes that contract;
+it does not define business rules, routes, request fields, statuses, or errors.
 
-Revised 2026-09-05: the conversational agent now lives in n8n. See §1.
+The Monday profile is a local demo with fictitious seeded data. It does not include
+user login, registration, production authentication, deployment, incidents, maps,
+or production WhatsApp guarantees.
 
-## 1. Who owns what
+## Ownership boundary
 
-The word "conversation" bundles three separate things. They do not live in the
-same place.
+| Concern | Owner |
+|---|---|
+| Understand free text and ask for missing fields | n8n agent |
+| Normalize the incoming phone and extracted text | n8n workflow |
+| Validate seeded carrier, truck, farm, capacity, and lifecycle | AgroFlow API |
+| Assign a window and persist the appointment | AgroFlow API |
+| Produce conversational wording from confirmed API data | n8n agent |
+| Display the same persisted appointment | AgroFlow Dashboard |
 
-| | Lives in | Why |
-|---|---|---|
-| **Understanding** — turning free text into fields | **n8n** (AI Agent) | This is what a language model is good at. A trucker writing "che la patente es AE123BC y salgo de San José" is one message, not three prompts. |
-| **Conducting** — what to ask next, wording, tone | **n8n** (AI Agent) | Demo copy changes constantly. Iterating on a prompt beats redeploying a service. |
-| **Truth** — appointments, calculations, records | **API** | The ingenio dashboard reads it. Two consumers cannot share state that lives inside the conversational engine. |
+**n8n owns the conversation. The API owns the record.**
 
-n8n owns the conversation. The API owns the record.
+The agent must never invent an appointment window, priority, state transition, or
+successful cancellation. It communicates a result only after receiving a successful
+API response.
 
-### The one hard rule
+## Local configuration
 
-**Anything the dashboard must see is written to the API at the moment it
-happens** — not at the end of the conversation, not held in agent memory.
+n8n runs inside Docker, so `localhost` points to the n8n container rather than the
+host machine. Configure:
 
-Losing the thread of a chat because n8n restarted is acceptable. Losing an
-appointment the ingenio already had on screen is not.
+```env
+AGROFLOW_API_URL=http://host.docker.internal:5000
+```
 
-### The agent must not invent the appointment
+The canonical routes already include `/api/v1`; workflow expressions append them to
+this base URL.
 
-The agent never composes a window, a priority or a departure time. It calls
-`POST /appointments`, receives the numbers, and only puts them into words. Every
-figure a trucker sees came out of an endpoint.
+Docker Desktop resolves `host.docker.internal`. On Linux, add the equivalent
+`host.docker.internal:host-gateway` mapping or use the host gateway address. If API
+and n8n later share one Compose network, use the API service name instead.
 
-This is a demo constraint, not an architectural preference: section 7 of the
-context document requires that the assigned slot is never presented as the
-product of a real algorithm.
+The Monday profile has no user authentication or API key. Do not infer a production
+security decision from this local-only exception.
 
-## 2. Conventions
+## Workflow inputs
 
-- Base path `/api/v1`. JSON, UTF-8.
-- Timestamps are RFC 3339 in UTC. Never local time with a `Z` suffix — the
-  Evolution webhook does exactly that, which is why n8n derives time from
-  `messageTimestamp`.
-- Auth: `X-Api-Key` header. n8n stores it as a credential.
-- `ingenioId` is present from the start. One tenant exists; the field costs
-  nothing now and avoids a migration later.
+The existing normalization step provides:
 
-## 3. Endpoints
+```text
+chatId
+phone
+name
+messageId
+instance
+text
+textNormalized
+receivedAt
+```
 
-Three. That is the whole API.
+The workflow uses the normalized incoming `phone` as the carrier identifier. It
+must not hardcode internal UUIDs in prompts, tools, or mapping nodes.
 
-### `POST /api/v1/appointments`
+## Supported intents
 
-The agent's main tool. Creates the request and returns the simulated
-assignment in one call — there is no separate "calculate" step to orchestrate.
+The minimum workflow supports exactly three business intents:
+
+1. request an appointment;
+2. look up the caller's appointment;
+3. report that the truck is `EN_CAMINO`.
+
+Other intents should receive a clear demo-scope response. They must not invoke
+unrelated or speculative API operations.
+
+## 1. Request an appointment
+
+The agent gathers and confirms:
+
+- caller phone, taken from the normalized webhook;
+- truck plate;
+- seeded farm code;
+- cane cut timestamp with explicit offset;
+- estimated load in tons.
+
+Request:
+
+```http
+POST ${AGROFLOW_API_URL}/api/v1/appointments
+Content-Type: application/json
+```
 
 ```json
 {
-  "ingenioId": "demo",
-  "phone": "5493812502185",
-  "name": "Braian",
-  "plate": "AE 123 BC",
-  "origin": "Finca San José",
-  "cutTime": "08:30"
+  "carrierPhone": "5493815550123",
+  "truckPlate": "AF123BC",
+  "farmCode": "F-01",
+  "cutAt": "2026-09-28T05:30:00-03:00",
+  "estimatedLoadTons": 28.5
 }
 ```
 
-Response `201`:
+A successful `201` response contains the persisted appointment, assigned window,
+and state `ASIGNADO`. Only then may the agent confirm the appointment.
+
+The chatbot does not ask for a preferred window. Window selection belongs to the
+backend.
+
+## 2. Look up the caller's appointment
+
+Request:
+
+```http
+GET ${AGROFLOW_API_URL}/api/v1/appointments?phone=5493815550123
+```
+
+The API returns appointments associated with the normalized phone. The workflow
+must use the current persisted state and window; it must not reconstruct either
+from conversational memory.
+
+If more than one result is returned, the agent identifies the relevant appointment
+using the confirmed plate or asks the caller to clarify.
+
+## 3. Report `EN_CAMINO`
+
+The workflow first identifies the appointment through the phone lookup and confirmed
+plate. It then requests the transition:
+
+```http
+POST ${AGROFLOW_API_URL}/api/v1/appointments/{id}/transitions
+Content-Type: application/json
+```
 
 ```json
 {
-  "id": "apt_01J8XYZ",
-  "ingenioId": "demo",
-  "phone": "5493812502185",
-  "plate": "AE 123 BC",
-  "origin": "Finca San José",
-  "cutTime": "08:30",
-  "windowStart": "2026-09-05T17:00:00Z",
-  "windowEnd": "2026-09-05T17:30:00Z",
-  "travelMinutes": 50,
-  "recommendedDeparture": "2026-09-05T16:10:00Z",
-  "priority": "high",
-  "priorityReason": "antigüedad de la carga",
-  "status": "assigned",
-  "simulated": true,
-  "createdAt": "2026-09-05T14:49:27Z"
+  "newStatus": "EN_CAMINO"
 }
 ```
 
-`simulated: true` is not decoration. The dashboard renders simulated rows
-differently, and the flag is what stops a demo figure from ever being read as a
-real assignment. It flips to `false` the day a real algorithm produces the slot.
+The agent confirms departure only after a successful `200` response reports
+`EN_CAMINO`.
 
-`422` when a field is missing or malformed, with a message the agent can turn
-into a question. A `422` is normal conversational flow, not an error.
+The chatbot does not perform later operator transitions and does not cancel
+appointments in the Monday profile.
 
-### `GET /api/v1/appointments`
+## Error handling
 
-One endpoint, two consumers.
+The API returns `application/problem+json` with stable `code` and `traceId` fields.
+The workflow handles them as follows:
 
-```
-GET /api/v1/appointments?phone=5493812502185      -> the agent, "¿cuál era mi turno?"
-GET /api/v1/appointments?ingenioId=demo&date=...  -> the dashboard queue
-```
+| HTTP | Meaning for the conversation |
+|---|---|
+| `400` | Ask again for the invalid or missing field. |
+| `404` | Explain that a seeded carrier, truck, farm, or appointment was not found; request confirmation. |
+| `409` | Explain the current business conflict without claiming success. |
+| `500` | Apologize and ask the user to retry later; log the `traceId`. |
 
-Returns an array of the object above. Same shape both ways — the dashboard and
-the agent are looking at the same rows, which is the entire point.
+Relevant conflict codes include:
 
-### `GET /api/v1/status?ingenioId=demo`
-
-Operational snapshot. Feeds the dashboard, and lets the agent answer "¿hay
-demora?" without guessing.
-
-```json
-{
-  "ingenioId": "demo",
-  "ingenioName": "Ingenio AgroFlow Demo",
-  "operational": true,
-  "currentDelayMinutes": 25,
-  "trucksWaiting": 12,
-  "windowCapacity": 4,
-  "nextFreeWindow": "2026-09-05T18:00:00Z",
-  "simulated": true
-}
+```text
+ACTIVE_APPOINTMENT_EXISTS
+NO_CAPACITY
+INVALID_TRANSITION
 ```
 
-## 4. The simulation
+The model must not translate an error into a successful appointment or transition.
 
-Deliberately simple, deliberately deterministic. It has to be explainable in one
-sentence on stage and produce the same answer twice in a rehearsal.
+## Minimal workflow shape
 
-- Windows are fixed 30-minute slots.
-- Each window holds up to `windowCapacity` trucks. Full window, take the next.
-- Travel time comes from a **static table of fincas**, hardcoded. No maps API,
-  no coordinates, no geocoding. For a demo, a lookup table is not a shortcut —
-  it is the correct amount of engineering.
-- Priority is by cut age: earlier `cutTime` means older cane means higher
-  priority. `priorityReason` is a plain-Spanish string the agent reads aloud.
-- `recommendedDeparture = windowStart - travelMinutes`.
-
-> **Assumption, not yet confirmed.** The static finca table is my proposal for
-> where distances come from. If there is a real source — coordinates, a maps
-> API, a spreadsheet — this section changes. Nothing else does.
-
-The whole thing goes behind one interface (`IAppointmentScheduler` in .NET
-terms). The fake and the real are two implementations of it. That substitution
-is the only reason the calculation is not written inline in the endpoint.
-
-## 5. What the API deliberately does not do
-
-- **No conversation state.** No steps, no "awaiting plate". That lives in the
-  agent now.
-- **No reply text.** The API returns data; the agent writes the words.
-- **No queue theory.** Not for the demo. The interface is there for it later.
-- **No auth beyond one API key.** It is a simulation behind a private URL.
-
-## 6. The n8n side
-
-```
-Webhook -> Respond 200 -> Filter -> Normalize -> AI Agent -> Send via Evolution
-                                                    |
-                                                    | tools
-                                                    v
-                                          POST /appointments
-                                          GET  /appointments?phone=
-                                          GET  /status
+```text
+Evolution webhook or local fixture
+  → Respond 200
+  → Filter own/group/unsupported messages
+  → Normalize phone and text
+  → AI Agent with short-term memory
+      → create appointment tool
+      → lookup appointment tool
+      → EN_CAMINO transition tool
+  → Send or capture reply
 ```
 
-The agent holds conversational memory. That memory is allowed to be ephemeral —
-a restart costs a trucker their thread, not the ingenio its data, because every
-committed fact already went to the API.
+Short-term n8n memory can help the dialogue but is never an appointment store. A
+workflow restart may lose conversational context; it must not lose API records.
 
-Model: OpenAI, key already provisioned.
+## Implementation tasks
 
-## 7. Building against it
+1. Replace the canned stub call with environment-based AgroFlow API calls.
+2. Define the three tools using the canonical request and response schemas.
+3. Require explicit confirmation of extracted plate, farm, cut time, and load before creation.
+4. Use the webhook phone automatically; never ask the model to invent it.
+5. Handle `400`, `404`, `409`, and `500` paths explicitly.
+6. Keep assignment, capacity, priority, and transition validation out of n8n.
+7. Export the updated workflow without credentials or personal data.
+8. Run the complete local path twice against a reset fictitious seed.
 
-The published n8n stub workflow (`stub-agroflow-api`) already answers a canned
-response. Point the agent's tools at stubs of the three endpoints above, build
-and rehearse the full WhatsApp round trip, then swap in the real service.
+## Acceptance checklist
 
-If swapping requires editing anything in n8n other than URLs, the boundary
-leaked.
+- [ ] `AGROFLOW_API_URL` is configurable and works from the n8n container.
+- [ ] A valid conversation creates one persisted appointment.
+- [ ] Repeating or retrying the conversation does not produce an invented confirmation.
+- [ ] A phone lookup returns the same appointment displayed by the dashboard.
+- [ ] `EN_CAMINO` is confirmed only after the API persists it.
+- [ ] Invalid seeded references and business conflicts remain failures.
+- [ ] The workflow contains no hardcoded internal UUIDs, credentials, or real personal data.
+- [ ] Unsupported intents stay outside the Monday demo.
