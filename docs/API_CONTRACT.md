@@ -62,7 +62,8 @@ textNormalized
 receivedAt
 ```
 
-The workflow uses the normalized incoming `phone` as the carrier identifier. It
+The workflow uses the normalized incoming `phone` as the carrier identifier. The API
+requires E.164 with a leading `+`, so the tools prefix it (URL-encoded as `%2B` in queries). It
 must not hardcode internal UUIDs in prompts, tools, or mapping nodes.
 
 ## Supported intents
@@ -95,9 +96,9 @@ Content-Type: application/json
 
 ```json
 {
-  "carrierPhone": "5493815550123",
+  "carrierPhone": "+5493815550101",
   "truckPlate": "AF123BC",
-  "farmCode": "F-01",
+  "farmCode": "FINCA-NORTE",
   "cutAt": "2026-09-28T05:30:00-03:00",
   "estimatedLoadTons": 28.5
 }
@@ -114,7 +115,7 @@ backend.
 Request:
 
 ```http
-GET ${AGROFLOW_API_URL}/api/v1/appointments?phone=5493815550123
+GET ${AGROFLOW_API_URL}/api/v1/appointments?phone=%2B5493815550101
 ```
 
 The API returns appointments associated with the normalized phone. The workflow

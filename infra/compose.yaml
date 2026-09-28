@@ -25,6 +25,16 @@ services:
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
       GENERIC_TIMEZONE: ${TIMEZONE}
       TZ: ${TIMEZONE}
+      # Workflow expressions read the integration settings below through $env.
+      # n8n 2.x blocks $env by default; the demo instance has a single trusted author.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      AGROFLOW_API_URL: ${AGROFLOW_API_URL}
+      EVOLUTION_INTERNAL_URL: http://evolution:8080
+      EVOLUTION_INSTANCE: ${EVOLUTION_INSTANCE}
+    extra_hosts:
+      # Docker Desktop resolves host.docker.internal natively; Linux needs this mapping
+      # to reach the AgroFlow API running on the host.
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:${N8N_BIND_PORT}:5678"
     expose:
