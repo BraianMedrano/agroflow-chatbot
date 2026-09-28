@@ -87,3 +87,10 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
 ## Next step
 
 Manual end-to-end run, then push and PR (user decision).
+
+## Post-merge fix (fix/chatbot-reply-and-prompt)
+
+- The merged `Chatbot.json` (PR #5) is the late delegated writer's version, which overwrote the
+  inline version before commit. Fixed after merge: system message lacked the `=` expression
+  prefix (the agent never saw the current date), the reply body interpolated the model output
+  into raw JSON (breaks on quotes/newlines), and runbook node names did not match.

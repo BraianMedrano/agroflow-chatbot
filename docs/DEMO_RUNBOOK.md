@@ -184,7 +184,7 @@ Each window has capacity for two trucks. Delete the database (step 7.3) to reset
 
 1. Edit in the n8n editor. The main places are:
    - **AI Agent → System message**: rules, tone, supported intents.
-   - **create_appointment / lookup_appointments / report_en_camino**: the API calls. They read
+   - **Create Appointment / Lookup Appointments By Phone / Report En Camino**: the API calls. They read
      `$env.AGROFLOW_API_URL`; never hardcode hosts, phones or ids.
    - **Send WhatsApp reply**: uses `$env.EVOLUTION_INTERNAL_URL` and `$env.EVOLUTION_INSTANCE`.
 2. Test by writing from the carrier phone and check **Executions** in n8n.
