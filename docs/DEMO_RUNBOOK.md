@@ -1,204 +1,224 @@
-# Run the AgroFlow demo infrastructure
+# Local demo runbook
 
-This work unit runs an isolated n8n and Evolution API demo stack without implementing the chatbot workflow. The selected public n8n hostname is `n8n.casteltech.ar`. Capture one real Evolution API event before mapping any WhatsApp message fields.
+Run the whole AgroFlow demo on one computer: API, dashboard, n8n, Evolution API and a real
+WhatsApp test number. Any teammate can follow this on their own PC (macOS, Windows or Linux).
 
-## Quick validation
+## How the pieces connect
 
-From the repository root, render both supported configurations without starting or changing any containers:
-
-```bash
-docker compose --env-file infra/env.example -f infra/compose.yaml config
-docker compose --env-file infra/env.example -f infra/compose.yaml -f infra/compose.vps.yaml config
+```text
+Carrier phone ──WhatsApp──▶ Bot phone (linked device)
+                                 │  outbound connection, nothing is exposed
+                                 ▼
+                     Evolution API (Docker, 127.0.0.1:8080)
+                                 │  webhook over the Docker network
+                                 ▼
+                     n8n "Chatbot" workflow (Docker, 127.0.0.1:5678)
+                                 │  AI Agent + tools, via host.docker.internal
+                                 ▼
+                     AgroFlow API (host, localhost:5000)  ◀── Dashboard (localhost:5173)
 ```
 
-Both commands must exit with status `0`. The second command only renders the external `castel_network` reference; it does not require that network to exist until deployment.
+- **Nothing is published to the Internet.** Evolution keeps an outbound connection to
+  WhatsApp, like WhatsApp Web. Never expose port `8080`: it controls the WhatsApp account.
+- The API is the source of truth. n8n only talks; the dashboard only reads and operates turns.
 
-The local rendering must set `N8N_PROXY_HOPS=0`. The VPS rendering must set `N8N_PROXY_HOPS=2` for the Cloudflare -> `castel_proxy` -> n8n chain.
+## 1. Prerequisites (once per PC)
 
-## Run locally
+| Tool | Why |
+|---|---|
+| Docker Desktop (or Docker Engine + Compose on Linux) | n8n, Evolution, Postgres, Redis |
+| .NET 8 SDK | AgroFlow API |
+| Node.js 20+ | Dashboard |
+| Git | The three repositories |
+| An OpenAI API key | The chatbot's language model |
+| Two WhatsApp numbers | One for the bot, one acting as the carrier (see step 6) |
 
-### 1. Create local configuration
+Clone the three repositories side by side:
 
-If `infra/.env` already exists, keep it and do not overwrite its secrets.
+```bash
+git clone https://github.com/agustinvallante/AgroFlow.git
+git clone https://github.com/GabrielBurieque/AgroFlow-Dashboard.git
+git clone https://github.com/BraianMedrano/agroflow-chatbot.git
+```
+
+## 2. Where every key lives
+
+| Secret | Where | How to get it |
+|---|---|---|
+| `N8N_ENCRYPTION_KEY` | `infra/.env` | `openssl rand -hex 32` |
+| `EVOLUTION_API_KEY` | `infra/.env` | `openssl rand -hex 32` |
+| `EVOLUTION_DB_PASSWORD` | `infra/.env` | `openssl rand -hex 24` |
+| OpenAI API key | n8n credential **OpenAI account** | OpenAI dashboard |
+| Evolution API key (same as `EVOLUTION_API_KEY`) | n8n credential **Header Auth account** | Copy from `infra/.env` |
+| AgroFlow API | none | The local demo profile has no authentication |
+
+Rules: never commit `infra/.env`, never paste keys in chats or issues, and never put a key
+inside a workflow node. n8n stores credentials encrypted with `N8N_ENCRYPTION_KEY`; if you
+change that value later, existing credentials stop working and must be created again.
+
+On Windows without `openssl`, generate the values in PowerShell:
+
+```powershell
+-join ((1..32) | ForEach-Object { '{0:x2}' -f (Get-Random -Maximum 256) })
+```
+
+## 3. Configure the chatbot stack (once per PC)
+
+From `agroflow-chatbot/`:
 
 ```bash
 cp infra/env.example infra/.env
-chmod 600 infra/.env
-openssl rand -hex 32
-openssl rand -hex 32
-openssl rand -hex 24
+chmod 600 infra/.env        # macOS/Linux only
 ```
 
-Paste the generated values into `N8N_ENCRYPTION_KEY`, `EVOLUTION_API_KEY`, and `EVOLUTION_DB_PASSWORD`, respectively. Do not commit `infra/.env` or paste its contents into logs, issues, or chat.
+Edit `infra/.env` and replace the three `replace-with-...` placeholders. The defaults for
+`AGROFLOW_API_URL=http://host.docker.internal:5000` and `EVOLUTION_INSTANCE=agroflow-demo`
+work as they are.
 
-### 2. Start the stack
+## 4. Start everything (every session)
+
+Open three terminals.
+
+**API** (`AgroFlow/`):
 
 ```bash
-docker compose --env-file infra/.env -f infra/compose.yaml config --quiet
-docker compose --env-file infra/.env -f infra/compose.yaml pull
+cd backend/Dsw2025Tpi.Api
+dotnet run --launch-profile http --urls http://localhost:5000
+```
+
+Check <http://localhost:5000/health> returns `{"status":"Healthy"}`. On **Linux**, use
+`--urls http://0.0.0.0:5000` instead: Docker reaches the host through its gateway address,
+which cannot see a loopback-only listener.
+
+**Dashboard** (`AgroFlow-Dashboard/`):
+
+```bash
+cp .env.example .env        # first time only; set VITE_DATA_SOURCE=http and VITE_API_URL=http://localhost:5000
+npm install                 # first time only
+npm run dev
+```
+
+Open <http://localhost:5173>.
+
+**n8n + Evolution** (`agroflow-chatbot/`):
+
+```bash
 docker compose --env-file infra/.env -f infra/compose.yaml up -d
-```
-
-If an image registry is temporarily unavailable, stop after configuration rendering and retry `pull` later. Do not start a partially pulled stack.
-
-Open n8n at <http://127.0.0.1:5678>. Open the Evolution API root at <http://127.0.0.1:8080> and follow its manager link when needed. If either bind port changes in `infra/.env`, use the new port.
-
-### 3. Verify services
-
-```bash
 docker compose --env-file infra/.env -f infra/compose.yaml ps
-curl --fail --silent --show-error http://127.0.0.1:5678/healthz/readiness
-curl --fail --silent --show-error http://127.0.0.1:8080/
-docker compose --env-file infra/.env -f infra/compose.yaml exec -T evolution-postgres sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-docker compose --env-file infra/.env -f infra/compose.yaml exec -T evolution-redis redis-cli ping
 ```
 
-Expected results: all four containers are running, n8n and Evolution return successful HTTP responses, PostgreSQL reports `accepting connections`, and Redis reports `PONG`.
+Wait until all four containers are `healthy`. n8n is at <http://localhost:5678>.
 
-## Deploy to the VPS
+## 5. Load the workflow in n8n (once per PC)
 
-The VPS override attaches only `agroflow-n8n` to the existing external `castel_network`. Evolution, PostgreSQL, and Redis remain on `agroflow_demo_backend`; PostgreSQL and Redis have no host ports. Both management ports bind only to `127.0.0.1`.
+1. Open <http://localhost:5678> and create the local owner account (it only exists on your PC).
+2. **Credentials → Create credential**:
+   - **OpenAI** → name it `OpenAI account` → paste your OpenAI API key.
+   - **Header Auth** → name it `Header Auth account` → Name: `apikey`, Value: your `EVOLUTION_API_KEY`.
+3. **Workflows → Import from file** → `flujos-n8n/Chatbot.json`.
+4. Open the nodes that show a credential warning and select the credential you just created:
+   `OpenAI Chat Model` and `Send WhatsApp reply`. Credential ids from another PC never carry over.
+5. Save and switch the workflow to **Active**. The production webhook is
+   `http://n8n:5678/webhook/d01e7ba4-e412-47e5-a841-dafc71257beb` inside Docker.
 
-### 1. Confirm the public hostname
+`flujos-n8n/stub-agroflow-api.json` is a legacy offline stub. The chatbot no longer uses it;
+do not import it.
 
-The tracked safe default is `N8N_PUBLIC_HOST=n8n.casteltech.ar`. A real VPS `infra/.env` remains authoritative and can override that value without changing the tracked sample. Keep the value as a hostname without a scheme or path.
+## 6. Connect WhatsApp (once per PC and bot number)
 
-### 2. Prepare the root-owned destination
+Understand the two roles first:
 
-These are **operator actions requiring sudo**:
+- **Bot phone**: the number you link to Evolution. Its WhatsApp *becomes* the bot. Messages you
+  type from this phone are ignored (`fromMe`), so you cannot test by writing to yourself.
+- **Carrier phone**: a second WhatsApp that writes to the bot. The API identifies the carrier by
+  this number, so it must exist in the API seed (step 7).
+
+Use a spare number for the bot: Evolution uses Baileys, an unofficial WhatsApp client, and the
+number can be banned.
+
+1. Open <http://localhost:8080/manager> and log in with `EVOLUTION_API_KEY`.
+2. Create an instance named exactly like `EVOLUTION_INSTANCE` (`agroflow-demo`), channel
+   **Baileys**.
+3. Open the instance, show the QR code, and on the bot phone go to
+   **WhatsApp → Linked devices → Link a device** and scan it. The status must turn **open**.
+4. In the instance's **Webhook** settings: enabled, URL
+   `http://n8n:5678/webhook/d01e7ba4-e412-47e5-a841-dafc71257beb`, "webhook by events" off,
+   base64 off, and only the `MESSAGES_UPSERT` event. Save.
+
+The URL uses `n8n`, not `localhost`: Evolution calls n8n from inside the Docker network.
+
+A linked session belongs to one Evolution instance. If several teammates run the demo, each one
+links their own bot number, or only one PC keeps the shared bot number linked at a time.
+
+## 7. Register the carrier phone in the API
+
+The seed only knows two fictitious carriers: `+5493815550101` (truck `AF123BC`) and
+`+5493815550102` (truck `AF456DE`); farms are `FINCA-NORTE` and `FINCA-SUR`. A real phone that is
+not in the seed gets `REFERENCE_NOT_FOUND`.
+
+To test with your real carrier phone, locally and without committing:
+
+1. Stop the API.
+2. In `AgroFlow/backend/Dsw2025Tpi.Data/Appointments/AppointmentsSeeder.cs`, replace
+   `+5493815550101` with your carrier number in E.164 format. Argentine mobiles look like
+   `+549` + area code + number, for example `+5493811234567`, which matches what WhatsApp sends.
+3. Delete `backend/Dsw2025Tpi.Api/agroflow-demo.db` and its `-wal`/`-shm` files so the seed runs
+   again from scratch.
+4. Start the API again. Discard the seeder change before committing anything in `AgroFlow`.
+
+## 8. Smoke test
+
+From the carrier phone, write to the bot:
+
+1. `Hola, quiero un turno` → the bot asks for plate, farm, cut time and load.
+2. `AF123BC, FINCA-NORTE, cortamos hoy a las 6, 28 toneladas` → the bot repeats the data and
+   asks for confirmation.
+3. `Sí` → the bot confirms with the window assigned by the API. The turn appears in the
+   dashboard queue within a few seconds.
+4. `¿Qué turno tengo?` → the bot reads the same turn back from the API.
+5. `Ya salí` → the bot reports `EN_CAMINO`; the dashboard shows the turn on its way.
+
+Each window has capacity for two trucks. Delete the database (step 7.3) to reset between rehearsals.
+
+## 9. Change the workflow
+
+1. Edit in the n8n editor. The main places are:
+   - **AI Agent → System message**: rules, tone, supported intents.
+   - **create_appointment / lookup_appointments / report_en_camino**: the API calls. They read
+     `$env.AGROFLOW_API_URL`; never hardcode hosts, phones or ids.
+   - **Send WhatsApp reply**: uses `$env.EVOLUTION_INTERNAL_URL` and `$env.EVOLUTION_INSTANCE`.
+2. Test by writing from the carrier phone and check **Executions** in n8n.
+3. Export: **⋯ → Download**, replace `flujos-n8n/Chatbot.json` with the downloaded file, and
+   review the diff. The export contains credential names and ids but never the secret values.
+   Keep the webhook path unchanged so every teammate's Evolution configuration keeps working.
+4. Commit on a branch and open a pull request. Teammates re-import the file (step 5.3) and
+   re-select their own credentials.
+
+## 10. Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| The bot never answers | n8n **Executions**: is there a run? If not, check the webhook URL and the `MESSAGES_UPSERT` event in Evolution, and that the workflow is **Active**. |
+| Execution stops at the Filter | You wrote from the bot phone (`fromMe`), from a group, or sent a non-text message. |
+| Tools fail with a connection error | The API is not running on port 5000, or on Linux it listens on `localhost` instead of `0.0.0.0`. |
+| `$env` access denied | Recreate the n8n container: `docker compose ... up -d --force-recreate n8n`. |
+| `REFERENCE_NOT_FOUND` | The carrier phone, plate or farm is not in the seed (step 7). |
+| `NO_CAPACITY` | The window is full; reset the database or use a later cut time. |
+| Reply node returns `401` | The `Header Auth account` value differs from `EVOLUTION_API_KEY`. |
+| Instance keeps disconnecting | Your PC went to sleep or the phone unlinked the device. Relink by QR. |
+
+## Stop and reset
 
 ```bash
-sudo install -d -m 0750 /opt/agroflow-demo
-sudo chown "$USER":"$(id -gn)" /opt/agroflow-demo
+docker compose --env-file infra/.env -f infra/compose.yaml down            # keeps data and WhatsApp session
+docker compose --env-file infra/.env -f infra/compose.yaml down --volumes  # deletes n8n, Evolution and the session
 ```
 
-From the local repository, transfer the source without deleting remote runtime configuration:
+Stop the API and dashboard with `Ctrl+C`.
 
-```bash
-rsync -av --exclude '.git/' --exclude '.atl/' --exclude '.codegraph/' --exclude '.DS_Store' --exclude 'infra/.env' ./ <vps-host>:/opt/agroflow-demo/
-```
+## Optional: share the n8n editor or move to a server
 
-### 3. Configure and start AgroFlow only
-
-On the VPS:
-
-If `infra/.env` already exists from an earlier deployment, keep it and skip the copy command.
-
-```bash
-cd /opt/agroflow-demo
-cp infra/env.example infra/.env
-chmod 600 infra/.env
-openssl rand -hex 32
-openssl rand -hex 32
-openssl rand -hex 24
-```
-
-Edit `infra/.env`: replace the three secret placeholders and confirm `N8N_PUBLIC_HOST=n8n.casteltech.ar`. Then run:
-
-```bash
-docker network inspect castel_network >/dev/null
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml config --quiet
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml pull
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml up -d
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml ps
-```
-
-These commands target only the `agroflow-demo` Compose project. They do not recreate or restart existing Castel, Palestra, or Engram services.
-
-### 4. Satisfy the public-route prerequisites
-
-Create a proxied Cloudflare DNS record for `n8n.casteltech.ar` that targets the same origin as the current Castel site. Keep the existing strict origin-validation policy; do not lower TLS verification to work around certificate errors. Do not create a public Evolution API record.
-
-The local artifact at `infra/nginx/n8n.casteltech.ar.conf` is intentionally blocked. Read-only metadata from the certificate currently referenced by the `casteltech.ar` vhost did not show an exact `n8n.casteltech.ar` SAN or a `*.casteltech.ar` wildcard SAN. Before installation, the operator must provide all of this evidence:
-
-- certificate metadata with `DNS:n8n.casteltech.ar` or `DNS:*.casteltech.ar` in the Subject Alternative Name extension;
-- the verified in-container certificate and matching private-key paths under the existing read-only `/etc/nginx/certs` mount;
-- an updated local artifact containing those exact paths as `ssl_certificate` and `ssl_certificate_key` directives.
-
-Inspect certificate metadata only; do not print, read, or copy private-key contents. Do not reuse the current Castel certificate paths without the missing SAN evidence.
-
-### 5. Install and enable the reviewed Nginx route
-
-Proceed only after the certificate blocker above is resolved and the two certificate directives have been added to the artifact. The exact host installation destination is `/opt/castel-stack/nginx/conf.d/n8n.casteltech.ar.conf`; the container sees it as `/etc/nginx/conf.d/n8n.casteltech.ar.conf`.
-
-Before changing Nginx, run the documented HTTPS smoke checks for every existing Castel, Palestra, and Engram public service and record their status. Then perform these **operator actions requiring sudo**:
-
-```bash
-sudo install -m 0644 /opt/agroflow-demo/infra/nginx/n8n.casteltech.ar.conf /opt/castel-stack/nginx/conf.d/n8n.casteltech.ar.conf && sudo docker exec castel_proxy nginx -t && sudo docker exec castel_proxy nginx -s reload
-```
-
-Run the reload command only when `nginx -t` succeeds. Then verify the new route and repeat every pre-existing service smoke check; their status and response must remain unchanged:
-
-```bash
-curl --fail --silent --show-error https://n8n.casteltech.ar/healthz/readiness
-```
-
-The vhost routes only `n8n.casteltech.ar` to `http://agroflow-n8n:5678` over `castel_network`. Do not restart `castel_proxy`, edit an unrelated vhost, or publish port `5678` to the Internet.
-
-## Use SSH tunnels
-
-For loopback-only management from a workstation:
-
-```bash
-ssh -N -L 5678:127.0.0.1:5678 -L 8080:127.0.0.1:8080 <vps-host>
-```
-
-Use the manager link returned by <http://127.0.0.1:8080> for Evolution management. Use the public HTTPS hostname for n8n owner setup once Nginx is ready; the direct n8n tunnel remains useful for health checks.
-
-## Capture the first real webhook
-
-Keep this sequence manual and observable:
-
-1. Deploy and verify all four services.
-2. Open the public n8n editor and create the initial owner account.
-3. Create a workflow containing only a generic `POST` Webhook node. Give it a clear capture-only path and start listening for a test event. Do not add field extraction yet.
-4. Create and connect an Evolution instance using `WHATSAPP-BAILEYS` and a secondary, disposable WhatsApp number.
-5. Configure that instance—not the disabled global webhook—to send only `MESSAGES_UPSERT` to the n8n test webhook. From Evolution's private network, use the n8n service origin `http://n8n:5678` with the test webhook path shown by n8n.
-6. Send one real text message to the connected number while n8n is listening.
-7. Inspect the captured payload and record the field names actually emitted by Evolution API `2.3.7`. Redact phone numbers, message content, API keys, and identifiers before sharing any evidence.
-8. Only then implement own-message, group, type, sender, and text extraction followed by the conversation state machine.
-
-The n8n test webhook is temporary and works only while listening. When the capture flow is ready for repeatable use, activate it and change Evolution to the corresponding production `/webhook/` URL. Export future workflows to `automation/n8n/workflows/`; create that directory with the first real export rather than keeping empty scaffolding.
-
-## Stop or roll back
-
-Stop and remove only AgroFlow containers and its dedicated bridge while preserving demo data:
-
-```bash
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml down
-```
-
-For local-only use, omit `-f infra/compose.vps.yaml`.
-
-Deleting demo data is a separate, destructive decision:
-
-```bash
-docker compose --env-file infra/.env -f infra/compose.yaml -f infra/compose.vps.yaml down --volumes
-```
-
-If the Nginx vhost was installed and `nginx -t` failed, remove only the new file and rerun validation; the failed candidate was never loaded:
-
-```bash
-sudo rm /opt/castel-stack/nginx/conf.d/n8n.casteltech.ar.conf
-sudo docker exec castel_proxy nginx -t
-```
-
-If the vhost was already reloaded, remove only the new file, validate the complete configuration, and reload it:
-
-```bash
-sudo rm /opt/castel-stack/nginx/conf.d/n8n.casteltech.ar.conf
-sudo docker exec castel_proxy nginx -t && sudo docker exec castel_proxy nginx -s reload
-```
-
-Repeat every pre-existing public-service smoke check after rollback. Remove or disable only the `n8n.casteltech.ar` Cloudflare DNS record when public rollback is required. Never run a global Docker prune. The local vhost artifact, external `castel_network`, unrelated Nginx files, and every unrelated container or volume are outside the runtime rollback boundary.
-
-## Known limits and risks
-
-- Evolution's Baileys integration is unofficial WhatsApp automation. Use only a disposable test number and no real operational data.
-- Evolution's GitHub release is `2.3.7`, while its verified Docker Hub tag is `v2.3.7`; the Compose file adds that required `v` prefix.
-- n8n uses SQLite in its dedicated volume for this demo; it is not the production AgroFlow business database.
-- Resource limits reserve headroom for existing VPS services but must be observed during the real message test.
-- Redis has no password because it has no host port and only joins the dedicated backend network. Do not attach unrelated containers to that network.
-- Public TLS installation remains blocked until certificate SAN coverage for `n8n.casteltech.ar` and the matching mounted key path are verified.
-- `N8N_PROXY_HOPS=2` assumes every public request follows Cloudflare -> `castel_proxy` -> n8n. If direct origin access is possible, restrict it before relying on proxy-derived client addresses.
-- No workflow or WhatsApp payload schema is included in this work unit by design.
+- To show your n8n editor to someone remotely for a while, use a temporary tunnel only to n8n,
+  for example `cloudflared tunnel --url http://localhost:5678`, and close it afterwards. Add
+  header authentication to the webhook before sharing. Never tunnel Evolution.
+- The VPS profile is documented in [VPS_DEPLOY.md](VPS_DEPLOY.md).

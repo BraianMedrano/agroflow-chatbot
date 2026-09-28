@@ -2,6 +2,11 @@
 
 Last updated: 2026-09-14. Demo date is not fixed; tentatively a couple of weeks out.
 
+> **Update 2026-09-28.** The demo now runs fully local and the chatbot is wired to the real
+> AgroFlow API: `flujos-n8n/Chatbot.json` uses an AI Agent with three API tools instead of the
+> stub, and the setup lives in [docs/DEMO_RUNBOOK.md](docs/DEMO_RUNBOOK.md). Sections below that
+> describe the stub, the VPS, or "next steps" are historical context.
+
 ## What changed
 
 This file previously described an urgent, single-session push to get a chatbot

@@ -47,7 +47,7 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
   Route: inline (2 mechanical files).
 - [x] T2 — Workflow: replace stub call with AI Agent + memory + 3 API tools; env-driven reply.
   Route: delegated writer failed (no write permission; reported false success), redone inline.
-- [ ] T3 — Docs: local-first runbook usable from any PC (setup, start, API keys/credentials,
+- [x] T3 — Docs: local-first runbook usable from any PC (setup, start, API keys/credentials,
   WhatsApp pairing, editing and re-exporting the flow), seed phone requirement, README.
   Scope extended by the user on 2026-09-28. Route: inline (delegated writer lacked permissions).
 
@@ -71,6 +71,18 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
   tools prefix `+` and send `phone` as a query parameter (encoded). Reply body built with
   JSON.stringify to survive quotes/newlines. Not import-tested (no Docker daemon).
 
+- T3: DEMO_RUNBOOK.md rewritten local-first (any PC, keys table, n8n credentials/import,
+  WhatsApp pairing with bot vs carrier phone, seed override, smoke test, editing/exporting the
+  workflow, troubleshooting). Old VPS runbook moved unchanged to VPS_DEPLOY.md with a banner.
+  API_CONTRACT examples fixed (+E.164, FINCA-NORTE). Repo URLs verified from git remotes.
+  Structural readback only; not executed end to end.
+
+## Pending checks
+
+- Manual end-to-end run (needs Docker daemon + .NET 8): import workflow into n8n 2.37.10,
+  confirm node typeVersions load, tools return problem+json to the agent (neverError), and a
+  seeded carrier creates an appointment visible in the dashboard.
+
 ## Next step
 
-T3.
+Manual end-to-end run, then push and PR (user decision).
