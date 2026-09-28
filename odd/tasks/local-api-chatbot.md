@@ -76,6 +76,7 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
   workflow, troubleshooting). Old VPS runbook moved unchanged to VPS_DEPLOY.md with a banner.
   API_CONTRACT examples fixed (+E.164, FINCA-NORTE). Repo URLs verified from git remotes.
   Structural readback only; not executed end to end.
+  Commit d469250. Review: slice_budget_reached, medium; user declined review for the branch slice.
 
 ## Pending checks
 
