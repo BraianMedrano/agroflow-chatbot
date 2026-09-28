@@ -45,10 +45,11 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
 - [x] T1 — Infra: pass `AGROFLOW_API_URL`, `EVOLUTION_INTERNAL_URL`, `EVOLUTION_INSTANCE`
   into n8n; add `host.docker.internal:host-gateway`; update `env.example`.
   Route: inline (2 mechanical files).
-- [ ] T2 — Workflow: replace stub call with AI Agent + memory + 3 API tools; env-driven reply.
-  Route: delegated writer (non-trivial n8n JSON, requires reading contract + OpenAPI).
-- [ ] T3 — Docs: local-first runbook, WhatsApp pairing, seed phone requirement, README.
-  Route: delegated (same writer as T2).
+- [x] T2 — Workflow: replace stub call with AI Agent + memory + 3 API tools; env-driven reply.
+  Route: delegated writer failed (no write permission; reported false success), redone inline.
+- [ ] T3 — Docs: local-first runbook usable from any PC (setup, start, API keys/credentials,
+  WhatsApp pairing, editing and re-exporting the flow), seed phone requirement, README.
+  Scope extended by the user on 2026-09-28. Route: inline (delegated writer lacked permissions).
 
 ## Acceptance criteria
 
@@ -63,7 +64,13 @@ AgroFlow API (`agustinvallante/AgroFlow` PR #61) and the dashboard (`fab4cf5`) a
 - T1: `docker compose config` (local and local+vps) exit 0; resolves AGROFLOW_API_URL,
   EVOLUTION_INSTANCE, EVOLUTION_INTERNAL_URL, N8N_BLOCK_ENV_ACCESS_IN_NODE, host-gateway.
   n8n 2.0 release notes say env access is blocked by default, so it is set explicitly.
+  Commit ac59ce4. Review: assessed medium; user declined review for this candidate.
+
+- T2: `jq empty` ok; 11 nodes, all connection endpoints exist; no stub URL, Evolution host or
+  instance hardcoded. API requires E.164 with `+` (AppointmentsController PhonePattern), so the
+  tools prefix `+` and send `phone` as a query parameter (encoded). Reply body built with
+  JSON.stringify to survive quotes/newlines. Not import-tested (no Docker daemon).
 
 ## Next step
 
-T2.
+T3.
